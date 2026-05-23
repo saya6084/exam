@@ -163,8 +163,7 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sa
 .src-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--rl);padding:14px;cursor:pointer;transition:all .15s}
 .src-card:hover{border-color:var(--blue-bdr)}
 .src-card.on{border-color:var(--blue-bdr);background:var(--blue-bg)}
-.src-card-icon{font-size:1.2rem;margin-bottom:5px}
-.src-card-name{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:3px}
+.src-card-name{font-size:18px;font-weight:700;color:var(--text);margin-bottom:3px}
 .src-card.on .src-card-name{color:var(--blue-txt)}
 .src-card-desc{font-size:.82rem;color:var(--text3);line-height:1.5}
 
@@ -182,10 +181,10 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sa
 .start-btn:disabled{opacity:.35;cursor:not-allowed}
 
 .marked-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:14px 16px}
-.marked-box-title{font-size:.82rem;font-weight:700;color:var(--marked-txt);margin-bottom:10px}
+.marked-box-title{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center}
 .marked-tags{display:flex;flex-wrap:wrap;gap:6px}
-.marked-tag{background:var(--marked-bg);border:1px solid var(--marked-bdr);color:var(--marked-txt);padding:4px 12px;border-radius:20px;font-size:.82rem;font-weight:700;cursor:pointer;transition:opacity .15s}
-.marked-tag:hover{opacity:.75}
+.marked-tag{background:var(--surface2,var(--bg));border:1px solid var(--border);color:var(--text);padding:4px 12px;border-radius:20px;font-size:.82rem;font-weight:600;cursor:pointer;transition:border-color .12s,color .12s}
+.marked-tag:hover{border-color:var(--blue-bdr);color:var(--blue-txt)}
 .no-marked{font-size:.82rem;color:var(--text3)}
 
 /* ══ QUIZ ══ */
@@ -209,9 +208,9 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sa
 .q-meta{display:flex;gap:6px;margin-bottom:11px;flex-wrap:wrap;align-items:center}
 .q-num-badge{font-size:.82rem;font-weight:600;color:var(--blue-txt);background:var(--blue-bg);padding:2px 9px;border-radius:20px}
 .q-cat-badge{font-size:.78rem;color:var(--text3);background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:20px}
-.q-mark-btn{position:absolute;top:14px;right:14px;background:var(--bg);border:1px solid var(--border2);border-radius:50%;width:28px;height:28px;font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--text3)}
-.q-mark-btn.on{border-color:var(--marked-bdr);background:var(--marked-bg);color:var(--marked-txt)}
-.q-mark-btn:hover{border-color:var(--marked-bdr);color:var(--marked-txt)}
+.q-mark-btn{position:absolute;top:14px;right:14px;background:none;border:none;border-radius:4px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--border2);padding:0}
+.q-mark-btn:hover{color:var(--text2)}
+.q-mark-btn.on{color:var(--marked-txt)}
 .q-text{font-size:1em;line-height:1.75;margin-bottom:14px;padding-right:32px}
 
 .opts{display:flex;flex-direction:column;gap:6px}
@@ -228,14 +227,15 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sa
 .exp{margin-top:11px;padding:10px 13px;background:var(--amber-bg);border:1px solid var(--amber-bdr);border-radius:var(--r);font-size:.9em;color:var(--amber-txt);line-height:1.65;display:none}
 .exp.show{display:block}
 
-/* action row — prev | next centred; skip absolute right */
-.act{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;position:relative;min-height:38px}
-.btn{padding:8px 20px;border-radius:var(--r);font-size:1rem;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s;font-family:inherit;white-space:nowrap;height:38px;display:inline-flex;align-items:center;justify-content:center}
+/* action row */
+.act{display:flex;align-items:center;justify-content:center;margin-top:14px;gap:8px;position:relative;min-height:36px}
+.act-nav{display:flex;align-items:center;gap:8px}
+.skip-lnk{position:absolute;right:0;font-size:.82rem;color:var(--text3);cursor:pointer;text-decoration:underline;text-underline-offset:3px;background:none;border:none;font-family:inherit;padding:0;transition:color .12s;white-space:nowrap}
+.skip-lnk:hover{color:var(--text2)}
+.btn{padding:8px 16px;border-radius:var(--r);font-size:.88rem;font-weight:600;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s;font-family:inherit;white-space:nowrap;height:36px;display:inline-flex;align-items:center;justify-content:center}
 .btn:hover{background:var(--bg)}
 .btn.pri{background:var(--blue-txt);border-color:var(--blue-txt);color:#fff}
 .btn.pri:hover{opacity:.88}
-.btn.skip-abs{position:absolute;right:0;top:0;font-size:1rem;padding:8px 16px;height:38px}
-.btn.skip-abs:hover{background:var(--bg);border-color:var(--border2)}
 .btn:disabled{opacity:.32;cursor:not-allowed}
 
 /* Result */
@@ -254,9 +254,11 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sa
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 @media(max-width:480px){
-  .stats{grid-template-columns:repeat(2,1fr)}
   .src-row,.cat-row{grid-template-columns:1fr}
   .topbar-left,.topbar-right{width:60px}
+  .stat-l{font-size:.62rem}
+  .stat-v{font-size:.95rem}
+  .stat{padding:8px 4px}
 }
 </style>
 </head>
@@ -337,10 +339,11 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sa
 <div class="topbar">
   <div class="topbar-inner">
     <div class="topbar-left">
-      <button class="gear-btn" id="gear-btn" onclick="openCfg()" title="設定">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="10" cy="10" r="3"/>
-          <path d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.22 4.22l1.06 1.06M14.72 14.72l1.06 1.06M15.78 4.22l-1.06 1.06M5.28 14.72l-1.06 1.06"/>
+      <button class="gear-btn" id="gear-btn" onclick="openCfg()" title="設定" style="display:none">
+        <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
+          <line x1="3" y1="6" x2="17" y2="6"/>
+          <line x1="3" y1="10" x2="17" y2="10"/>
+          <line x1="3" y1="14" x2="17" y2="14"/>
         </svg>
       </button>
     </div>
@@ -348,7 +351,7 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sa
       <div class="topbar-logo">保險題庫</div>
     </div>
     <div class="topbar-right">
-      <button class="end-btn" id="end-btn" onclick="goHome()" style="display:none">結束測驗</button>
+      <button class="end-btn" id="end-btn" onclick="goHome()" style="display:none">← 返回</button>
     </div>
   </div>
 </div>
@@ -364,27 +367,27 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sa
     <div class="sec-lbl">選擇來源</div>
     <div class="src-row">
       <div class="src-card" id="src-jingxuan" onclick="selSrc('jingxuan')">
-        <div class="src-card-icon">📚</div>
         <div class="src-card-name">精選考題</div>
         <div class="src-card-desc">法規 384 題 ／ 實務 253 題<br>歷屆精選重點考題</div>
       </div>
       <div class="src-card" id="src-amo" onclick="selSrc('amo')">
-        <div class="src-card-icon">🎯</div>
         <div class="src-card-name">阿摩題庫</div>
         <div class="src-card-desc">法規 172 題 ／ 實務 90 題<br>阿摩線上練習題庫</div>
       </div>
     </div>
 
-    <div class="sec-lbl">選擇科目</div>
-    <div class="cat-row">
-      <button class="cat-btn" id="cat-fagui" onclick="selCat('fagui')">
-        <div class="cat-btn-name">⚖️ 保險法規</div>
-        <div class="cat-btn-count" id="cnt-fagui">請先選擇來源</div>
-      </button>
-      <button class="cat-btn" id="cat-shiwu" onclick="selCat('shiwu')">
-        <div class="cat-btn-name">📋 保險實務</div>
-        <div class="cat-btn-count" id="cnt-shiwu">請先選擇來源</div>
-      </button>
+    <div id="cat-section" style="display:none">
+      <div class="sec-lbl">選擇科目</div>
+      <div class="cat-row">
+        <button class="cat-btn" id="cat-fagui" onclick="selCat('fagui')">
+          <div class="cat-btn-name">保險法規</div>
+          <div class="cat-btn-count" id="cnt-fagui">0 題</div>
+        </button>
+        <button class="cat-btn" id="cat-shiwu" onclick="selCat('shiwu')">
+          <div class="cat-btn-name">保險實務</div>
+          <div class="cat-btn-count" id="cnt-shiwu">0 題</div>
+        </button>
+      </div>
     </div>
 
     <div class="start-wrap">
@@ -392,7 +395,9 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sa
     </div>
 
     <div class="marked-box">
-      <div class="marked-box-title">🔖 已標註題目（點擊分組練習）</div>
+      <div class="marked-box-title">
+        <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" style="margin-right:5px;vertical-align:-2px;flex-shrink:0"><path d="M5 3a2 2 0 0 0-2 2v12l7-3 7 3V5a2 2 0 0 0-2-2H5z"/></svg>已標註題目（點擊分組練習）
+      </div>
       <div class="marked-tags" id="marked-tags"><span class="no-marked">尚無標註題目</span></div>
     </div>
   </div>
@@ -418,7 +423,11 @@ body{font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei','Heiti TC',sa
     <div class="q-card">
       <div class="q-meta" id="q-meta"></div>
       <div class="q-text" id="q-text"></div>
-      <button class="q-mark-btn" id="mark-btn" onclick="toggleMark()" title="標註此題">🔖</button>
+      <button class="q-mark-btn" id="mark-btn" onclick="toggleMark()" title="標註此題">
+        <svg id="mark-icon" viewBox="0 0 20 20" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 3a2 2 0 0 0-2 2v12l7-3 7 3V5a2 2 0 0 0-2-2H5z"/>
+        </svg>
+      </button>
       <div class="opts" id="opts"></div>
       <div class="exp" id="exp"></div>
       <!-- ← 上一題  下一題→  [略過] -->
@@ -501,10 +510,9 @@ function showScr(name){
     document.getElementById('screen-'+s).style.display=s===name?'':'none';
   });
   inQuiz=(name==='quiz');
-  document.getElementById('end-btn').style.display=(name!=='home')?'':'none';
-  if(name==='home'){
-    document.querySelector('.topbar-logo').textContent='保險題庫';
-  }
+  const isHome=(name==='home');
+  document.getElementById('end-btn').style.display=isHome?'none':'';
+  document.getElementById('gear-btn').style.display=isHome?'none':'';
   closeCfg();
 }
 function goHome(){showScr('home');updateMarkedList()}
@@ -517,6 +525,7 @@ function selSrc(id){
   const c=COUNTS[id];
   document.getElementById('cnt-fagui').textContent=c.fagui+' 題';
   document.getElementById('cnt-shiwu').textContent=c.shiwu+' 題';
+  document.getElementById('cat-section').style.display='';
   checkReady();
 }
 function selCat(id){
@@ -622,10 +631,12 @@ function render(){
   const nextLabel=isLast?'查看結果':'下一題 →';
   const nextFn=isLast?'showResult()':'goNext()';
   const skipBtn=rev?'':
-    `<button class="btn skip-abs" onclick="skipQ()">略過</button>`;
+    `<button class="skip-lnk" onclick="skipQ()">略過</button>`;
   document.getElementById('act').innerHTML=
-    `<button class="btn" onclick="goPrev()" ${prevDis}>← 上一題</button>`+
-    `<button class="btn pri" onclick="${nextFn}" ${nextDis}>${nextLabel}</button>`+
+    `<div class="act-nav">`+
+      `<button class="btn" onclick="goPrev()" ${prevDis}>← 上一題</button>`+
+      `<button class="btn pri" onclick="${nextFn}" ${nextDis}>${nextLabel}</button>`+
+    `</div>`+
     skipBtn;
 
   updateStats();
