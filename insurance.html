@@ -551,13 +551,16 @@ function checkReady(){
   document.getElementById('start-btn').disabled=!(selSrcId&&selCatId);
 }
 function startQuiz(qs){
-  const newKey=qs?null:(selSrcId+'_'+selCatId);
-  const oldKey=isMarked?null:(selSrcId+'_'+selCatId);
-  // determine if this is the same quiz set as current session
-  const sameSet=!qs&&!isMarked&&newKey===oldKey&&questions.length>0;
-  if(qs){questions=qs;isMarked=true}
-  else{questions=DATA[selSrcId+'_'+selCatId].slice();isMarked=false}
-  if(!sameSet){cur=0;answers={};skipped={};cor=0;wrg=0;}
+  // save current set state before switching
+  saveCurrentToSessions();
+  if(qs){questions=qs;isMarked=true;currentSetKey=null;}
+  else{
+    const newKey=selSrcId+'_'+selCatId;
+    isMarked=false;
+    questions=DATA[newKey].slice();
+    currentSetKey=newKey;
+    loadFromSessions(newKey);
+  }
   showScr('quiz');
   saveSession();
   render();
@@ -725,15 +728,29 @@ function showResult(){
 }
 
 /* ═══ PERSISTENCE ═══ */
+// sessions: { [setKey]: {answers, skipped, cor, wrg, cur} }
+let sessions={};
+let currentSetKey=null;
+
+function getSetKey(){
+  if(isMarked)return null;
+  return selSrcId+'_'+selCatId;
+}
+function saveCurrentToSessions(){
+  const k=currentSetKey;
+  if(!k)return;
+  sessions[k]={answers:Object.assign({},answers),skipped:Object.assign({},skipped),cor,wrg,cur};
+}
+function loadFromSessions(k){
+  const s=sessions[k];
+  if(s){answers=Object.assign({},s.answers);skipped=Object.assign({},s.skipped);cor=s.cor||0;wrg=s.wrg||0;cur=s.cur||0;}
+  else{answers={};skipped={};cor=0;wrg=0;cur=0;}
+}
 function saveSession(){
   try{
     const qList=questions.map(q=>({sk:getSK(q),id:q.id}));
-    localStorage.setItem('qs_session',JSON.stringify({
-      selSrcId,selCatId,isMarked,cur,cor,wrg,
-      qList,
-      answers:Object.fromEntries(Object.entries(answers).map(([k,v])=>[k,v])),
-      skipped:Object.fromEntries(Object.entries(skipped).map(([k,v])=>[k,v]))
-    }));
+    saveCurrentToSessions();
+    localStorage.setItem('qs_session',JSON.stringify({selSrcId,selCatId,isMarked,currentSetKey,qList,sessions}));
   }catch(e){}
 }
 function saveMarked(){
@@ -743,24 +760,25 @@ function clearStorage(){
   try{localStorage.removeItem('qs_session');localStorage.removeItem('qm')}catch(e){}
 }
 function loadAll(){
-  // load marked
   try{const s=localStorage.getItem('qm');if(s)marked=JSON.parse(s)}catch(e){}
-  // load session
   try{
     const raw=localStorage.getItem('qs_session');
     if(!raw)return;
     const d=JSON.parse(raw);
+    sessions=d.sessions||{};
     selSrcId=d.selSrcId;selCatId=d.selCatId;isMarked=d.isMarked;
-    cur=d.cur||0;cor=d.cor||0;wrg=d.wrg||0;
-    answers=d.answers||{};skipped=d.skipped||{};
-    // rebuild questions array from stored key+id list
+    currentSetKey=d.currentSetKey||null;
     const qList=d.qList||[];
     questions=qList.map(({sk,id})=>{
       const q=(DATA[sk]||[]).find(q=>q.id===id);
       return q?{...q,_sk:sk}:null;
     }).filter(Boolean);
     if(!questions.length)return;
-    // restore UI selections
+    if(currentSetKey&&sessions[currentSetKey]){
+      const s=sessions[currentSetKey];
+      answers=Object.assign({},s.answers);skipped=Object.assign({},s.skipped);
+      cor=s.cor||0;wrg=s.wrg||0;cur=s.cur||0;
+    }
     if(selSrcId){
       document.querySelectorAll('.src-card').forEach(c=>c.classList.remove('on'));
       const sc=document.getElementById('src-'+selSrcId);
@@ -775,10 +793,7 @@ function loadAll(){
       const cb=document.getElementById('cat-'+selCatId);
       if(cb)cb.classList.add('on');
     }
-    // resume quiz
-    showScr('quiz');
-    render();
-    renderCfgDots();
+    showScr('quiz');render();renderCfgDots();
   }catch(e){}
 }
 function updateMarkedList(){
@@ -795,9 +810,9 @@ function updateMarkedList(){
   });
 }
 function clearAllMarked(){
-  if(!Object.keys(marked).length)return;
+  if(!Object.keys(marked).length&&!Object.keys(sessions).length)return;
   if(!confirm('確定清除所有標註及答題記錄？'))return;
-  marked={};answers={};skipped={};cor=0;wrg=0;questions=[];cur=0;
+  marked={};sessions={};answers={};skipped={};cor=0;wrg=0;questions=[];cur=0;currentSetKey=null;
   clearStorage();
   updateMarkedList();
 }
