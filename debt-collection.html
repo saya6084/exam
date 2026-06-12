@@ -525,6 +525,33 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ── ORDER TOGGLE ── */
+  .order-toggle {
+    display: flex;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .order-btn {
+    background: none;
+    border: none;
+    padding: 0 .65rem;
+    height: 32px;
+    font-size: .8rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .order-btn.active {
+    background: var(--blue-txt);
+    color: #fff;
+  }
+  .order-btn:not(.active):hover { color: var(--blue-txt); }
+
   /* ── THEME TOGGLE ── */
   .theme-toggle {
     background: var(--bg);
@@ -533,13 +560,14 @@
     width: 34px;
     height: 34px;
     cursor: pointer;
-    font-size: 1rem;
     display: flex; align-items: center; justify-content: center;
     transition: all .15s;
     flex-shrink: 0;
     color: var(--text2);
     -webkit-tap-highlight-color: transparent;
+    padding: 0;
   }
+  .theme-toggle svg { display: block; }
   .theme-toggle:hover, .theme-toggle:active { border-color: var(--blue-bdr); color: var(--blue-txt); }
 
   /* scrollbar */
@@ -557,7 +585,7 @@
 <!-- HOME -->
 <div id="home" class="screen active">
   <div style="position:absolute;top:1.2rem;right:1.5rem;">
-    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn-home" title="切換主題">🌙</button>
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn-home" title="切換主題"></button>
   </div>
   <div class="home-inner">
     <div class="badge">債權委外認證</div>
@@ -598,9 +626,13 @@
   <div class="topbar">
     <button class="topbar-back" onclick="goHome()">← 返回</button>
     <span class="topbar-title" id="practice-title">全部練習</span>
-    <div style="display:flex;align-items:center;gap:.6rem;">
+    <div style="display:flex;align-items:center;gap:.5rem;">
+      <div class="order-toggle" id="order-toggle">
+        <button class="order-btn active" id="order-seq" onclick="setOrder('seq')">依序</button>
+        <button class="order-btn" id="order-rand" onclick="setOrder('rand')">隨機</button>
+      </div>
       <span class="topbar-info" id="practice-info"></span>
-      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+      <button class="theme-toggle" onclick="toggleTheme()"></button>
     </div>
   </div>
   <div class="progress-bar"><div class="progress-fill" id="practice-progress"></div></div>
@@ -618,7 +650,7 @@
     <span class="topbar-title">模擬考試</span>
     <div style="display:flex;align-items:center;gap:.6rem;">
       <span class="topbar-info" id="exam-info"></span>
-      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+      <button class="theme-toggle" onclick="toggleTheme()"></button>
     </div>
   </div>
   <div class="progress-bar"><div class="progress-fill" id="exam-progress"></div></div>
@@ -633,7 +665,7 @@
 <!-- RESULT -->
 <div id="result" class="screen">
   <div style="position:absolute;top:1.2rem;right:1.5rem;">
-    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    <button class="theme-toggle" onclick="toggleTheme()"></button>
   </div>
   <div class="result-inner">
     <div class="result-score" id="result-score"></div>
@@ -656,7 +688,7 @@
   <div class="topbar">
     <button class="topbar-back" id="wrong-review-back" onclick="goHome()">← 返回</button>
     <span class="topbar-title" id="wrong-review-title">錯誤記錄</span>
-    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    <button class="theme-toggle" onclick="toggleTheme()"></button>
   </div>
   <div class="wrong-list" id="wrong-list-content"></div>
 </div>
@@ -777,20 +809,45 @@ function toggleMark(id) {
 }
 
 // ── PRACTICE ──
+let practiceOrder = 'seq'; // 'seq' | 'rand'
+let practiceBaseList = []; // original ordered list
+
+function setOrder(order) {
+  if (practiceOrder === order) return;
+  practiceOrder = order;
+  document.getElementById('order-seq').classList.toggle('active', order === 'seq');
+  document.getElementById('order-rand').classList.toggle('active', order === 'rand');
+  // Rebuild list, try to keep current question visible
+  const currentId = practiceList[practiceIdx]?.['題號'];
+  practiceList = order === 'rand' ? shuffle(practiceBaseList) : [...practiceBaseList];
+  practiceAnswers = {};
+  practiceIdx = practiceList.findIndex(q => q['題號'] === currentId);
+  if (practiceIdx < 0) practiceIdx = 0;
+  renderPractice();
+}
+
 function startPractice() {
+  practiceBaseList = QUESTIONS;
   practiceList = QUESTIONS;
+  practiceOrder = 'seq';
   practiceIdx = 0;
   practiceAnswers = {};
   document.getElementById('practice-title').textContent = '全部練習';
+  document.getElementById('order-toggle').style.display = 'flex';
+  document.getElementById('order-seq').classList.add('active');
+  document.getElementById('order-rand').classList.remove('active');
   showScreen('practice');
   renderPractice();
 }
 function startMarkedPractice() {
   if (markedIds.size === 0) { showToast('尚無標記題目'); return; }
-  practiceList = QUESTIONS.filter(q => markedIds.has(q['題號']));
+  practiceBaseList = QUESTIONS.filter(q => markedIds.has(q['題號']));
+  practiceList = [...practiceBaseList];
+  practiceOrder = 'seq';
   practiceIdx = 0;
   practiceAnswers = {};
   document.getElementById('practice-title').textContent = '標記題目練習';
+  document.getElementById('order-toggle').style.display = 'none';
   showScreen('practice');
   renderPractice();
 }
@@ -976,8 +1033,10 @@ function toggleTheme() {
 }
 function updateThemeIcons() {
   const isDark = document.documentElement.classList.contains('dark');
+  const moonSVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+  const sunSVG = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
   document.querySelectorAll('.theme-toggle').forEach(btn => {
-    btn.textContent = isDark ? '☀️' : '🌙';
+    btn.innerHTML = isDark ? sunSVG : moonSVG;
     btn.title = isDark ? '切換淺色模式' : '切換深色模式';
   });
 }
