@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>債權委外題庫測驗系統</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+  :root {
+    --bg:#f8f7f4;
+    --surface:#fff;
+    --border:#e5e2dc;
+    --border2:#d0ccc4;
+    --text:#1a1917;
+    --text2:#6b6860;
+    --text3:#9c9890;
+    --blue-bg:#e8f0fb;
+    --blue-txt:#1a4fa0;
+    --blue-bdr:#3b7dd8;
+    --green-bg:#e8f5ee;
+    --green-txt:#1a6e3a;
+    --green-bdr:#2d9e5a;
+    --red-bg:#fceaea;
+    --red-txt:#9b2020;
+    --red-bdr:#d94040;
+    --amber-bg:#fef3e2;
+    --amber-txt:#7a4800;
+    --amber-bdr:#d4900a;
+    --marked-bg:#f5eeff;
+    --marked-txt:#6b21c8;
+    --marked-bdr:#9b59e8;
+    /* mapped vars */
+    --accent: var(--blue-txt);
+    --accent2: var(--blue-bdr);
+    --accent-light: var(--blue-bg);
+    --warn: var(--red-txt);
+    --success: var(--green-txt);
+    --muted: var(--text2);
+    --opt-letter-bg: var(--blue-bg);
+    --opt-letter-color: var(--blue-txt);
+    --shadow: 0 1px 4px rgba(0,0,0,.07);
+    --topbar-bg: var(--surface);
+    --topbar-text: var(--text);
+    --topbar-muted: var(--text2);
+    --r:10px;
+  }
+
+  html.dark {
+    --bg:#10121a;
+    --surface:#1c1f2e;
+    --border:#2d3148;
+    --border2:#3a4060;
+    --text:#dde1ee;
+    --text2:#8890b0;
+    --text3:#5a6080;
+    --blue-bg:rgba(59,125,216,0.15);
+    --blue-txt:#7eb3f5;
+    --blue-bdr:#3b7dd8;
+    --green-bg:rgba(45,158,90,0.15);
+    --green-txt:#5dcc8a;
+    --green-bdr:#2d9e5a;
+    --red-bg:rgba(217,64,64,0.15);
+    --red-txt:#f08080;
+    --red-bdr:#d94040;
+    --amber-bg:rgba(212,144,10,0.15);
+    --amber-txt:#e0b060;
+    --amber-bdr:#d4900a;
+    --marked-bg:rgba(155,89,232,0.15);
+    --marked-txt:#c09af5;
+    --marked-bdr:#9b59e8;
+    --shadow: 0 1px 4px rgba(0,0,0,.30);
+    --topbar-bg: var(--surface);
+    --topbar-text: var(--text);
+    --topbar-muted: var(--text2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body, .topbar, .q-nav, .screen, .menu-btn, .option, .nav-btn, .result-btn, .wrong-item, .toast {
+    transition: background-color .25s, border-color .25s, color .25s;
+  }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 18px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; }
+  .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ── HOME ── */
+  #home {
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+    background: var(--bg);
+  }
+  .home-inner {
+    text-align: center;
+    max-width: 520px;
+    width: 100%;
+  }
+  .badge {
+    display: inline-block;
+    background: var(--blue-bg);
+    border: 1px solid var(--blue-bdr);
+    color: var(--blue-txt);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    padding: .3em 1em;
+    border-radius: 20px;
+    margin-bottom: 1.2rem;
+  }
+  h1 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -.01em;
+    margin-bottom: .6rem;
+    color: var(--text);
+  }
+  h1 span { color: var(--blue-txt); }
+  .subtitle {
+    color: var(--text2);
+    font-size: .95rem;
+    line-height: 1.7;
+    margin-bottom: 1.8rem;
+  }
+  .home-stats {
+    display: flex;
+    justify-content: center;
+    gap: .5rem;
+    margin-bottom: 1.5rem;
+  }
+  .stat-item {
+    flex: 1;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: .9rem .5rem;
+  }
+  .stat-num {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--blue-txt);
+  }
+  .stat-label { font-size: .75rem; color: var(--text3); margin-top: .2rem; }
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+    margin-bottom: 1rem;
+  }
+  .menu-btn {
+    padding: 1.2rem 1rem;
+    border-radius: 14px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+  }
+  .menu-btn:hover, .menu-btn:active {
+    border-color: var(--blue-bdr);
+    background: var(--blue-bg);
+  }
+  .menu-btn.primary {
+    background: var(--blue-txt);
+    border-color: var(--blue-txt);
+    color: #fff;
+    font-weight: 700;
+  }
+  .menu-btn.primary:hover, .menu-btn.primary:active {
+    opacity: .88;
+  }
+  .menu-btn.marked-btn {
+    border-color: var(--marked-bdr);
+    color: var(--marked-txt);
+  }
+  .menu-btn.marked-btn:hover, .menu-btn.marked-btn:active {
+    background: var(--marked-bg);
+  }
+  .btn-icon { font-size: 1.5rem; display: block; margin-bottom: .45rem; }
+  .btn-label { font-size: .95rem; font-weight: 700; display: block; color: inherit; }
+  .btn-sub { font-size: .78rem; color: var(--text3); margin-top: .2rem; display: block; }
+  .menu-btn.primary .btn-sub { color: rgba(255,255,255,.7); }
+  .menu-btn.marked-btn .btn-sub { color: var(--marked-txt); opacity: .7; }
+  .marked-count-badge {
+    display: inline-block;
+    background: var(--marked-bdr);
+    color: #fff;
+    border-radius: 20px;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: .1em .6em;
+    margin-left: .35em;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    height: 52px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-title { font-weight: 700; font-size: 1.05rem; color: var(--blue-txt); letter-spacing: 1px; }
+  .topbar-info { color: var(--text3); font-size: .88rem; font-weight: 600; }
+  .topbar-back {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    cursor: pointer;
+    font-size: .9rem;
+    font-family: inherit;
+    font-weight: 600;
+    padding: 0 .75rem;
+    height: 34px;
+    border-radius: 8px;
+    transition: all .15s;
+  }
+  .topbar-back:hover { border-color: var(--blue-bdr); color: var(--blue-txt); }
+
+  /* ── PROGRESS ── */
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    position: sticky;
+    top: 52px;
+    z-index: 9;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--blue-bdr);
+    transition: width .3s ease;
+  }
+
+  /* ── QUESTION AREA ── */
+  .q-area {
+    flex: 1;
+    padding: 1rem;
+    max-width: 100%;
+    width: 100%;
+  }
+  .q-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .85rem;
+  }
+  .q-num {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--blue-txt);
+    background: var(--blue-bg);
+    padding: .2em .8em;
+    border-radius: 20px;
+  }
+  .mark-btn {
+    background: none;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: .35rem .75rem;
+    cursor: pointer;
+    font-size: .85rem;
+    font-family: inherit;
+    transition: all .15s;
+    color: var(--text3);
+    font-weight: 600;
+  }
+  .mark-btn.marked {
+    border-color: var(--marked-bdr);
+    color: var(--marked-txt);
+    background: var(--marked-bg);
+  }
+  .mark-btn:hover { border-color: var(--marked-bdr); color: var(--marked-txt); }
+
+  .q-text {
+    font-size: 1em;
+    line-height: 1.8;
+    font-weight: 400;
+    margin-bottom: 1.2rem;
+    color: var(--text);
+    padding: .25rem 0;
+  }
+
+  .options { display: flex; flex-direction: column; gap: .55rem; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .85rem 1rem;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: background .1s, border-color .1s;
+    text-align: left;
+    font-family: inherit;
+    color: var(--text);
+    font-size: 1em;
+    line-height: 1.65;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .option:hover:not(:disabled), .option:active:not(:disabled) {
+    background: var(--bg);
+    border-color: var(--border2);
+  }
+  .option .opt-letter {
+    flex-shrink: 0;
+    font-weight: 700;
+    font-size: .85em;
+    color: var(--text3);
+    min-width: 1.1rem;
+    margin-top: .15rem;
+  }
+  .option:hover:not(:disabled) .opt-letter { color: var(--text2); }
+  .option.selected { border-color: var(--blue-bdr); background: var(--blue-bg); }
+  .option.selected .opt-letter { color: var(--blue-txt); }
+  .option.correct { border-color: var(--green-bdr); background: var(--green-bg); color: var(--green-txt); }
+  .option.correct .opt-letter { color: var(--green-txt); }
+  .option.wrong { border-color: var(--red-bdr); background: var(--red-bg); color: var(--red-txt); }
+  .option.wrong .opt-letter { color: var(--red-txt); }
+  .option:disabled { cursor: default; }
+
+  .explanation {
+    margin-top: .75rem;
+    padding: .85rem 1rem;
+    border-radius: var(--r);
+    font-size: .9em;
+    line-height: 1.7;
+    font-weight: 400;
+  }
+  .explanation.correct-exp {
+    background: var(--green-bg);
+    border: 1px solid var(--green-bdr);
+    color: var(--green-txt);
+  }
+  .explanation.wrong-exp {
+    background: var(--red-bg);
+    border: 1px solid var(--red-bdr);
+    color: var(--red-txt);
+  }
+
+  /* ── NAV ── */
+  .q-nav {
+    display: flex;
+    gap: .6rem;
+    padding: .75rem 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: .75rem;
+    border-radius: var(--r);
+    border: 1px solid var(--border2);
+    background: var(--bg);
+    color: var(--text2);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: .95rem;
+    font-weight: 600;
+    transition: all .15s;
+    -webkit-tap-highlight-color: transparent;
+    height: 44px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-btn:hover, .nav-btn:active { background: var(--surface); border-color: var(--blue-bdr); color: var(--blue-txt); }
+  .nav-btn.next-btn {
+    background: var(--blue-txt);
+    border-color: var(--blue-txt);
+    color: #fff;
+    font-weight: 700;
+  }
+  .nav-btn.next-btn:hover, .nav-btn.next-btn:active { opacity: .88; }
+  .nav-btn:disabled { opacity: .32; cursor: not-allowed; }
+
+  /* ── QUIZ LIST (全部練習) ── */
+  .quiz-list-screen .q-area { padding-top: 1rem; }
+  .filter-bar {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: 1.2rem;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: .4rem .9rem;
+    border-radius: 2rem;
+    border: 1.5px solid var(--border);
+    background: none;
+    color: var(--muted);
+    font-size: .8rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s;
+  }
+  .filter-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,200,160,.08);
+  }
+
+  /* ── EXAM RESULT ── */
+  #result {
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+    position: relative;
+  }
+  .result-inner {
+    max-width: 100%;
+    width: 100%;
+    text-align: center;
+  }
+  .result-score {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: .3rem;
+  }
+  .result-score.pass { color: var(--green-txt); }
+  .result-score.fail { color: var(--red-txt); }
+  .result-verdict {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1.2rem;
+    color: var(--text2);
+  }
+  .result-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: .5rem;
+    margin-bottom: 1.2rem;
+  }
+  .rs-item {
+    text-align: center;
+    background: var(--bg);
+    border-radius: var(--r);
+    padding: .9rem .5rem;
+    border: 1px solid var(--border);
+  }
+  .rs-num { font-size: 1.4rem; font-weight: 700; }
+  .rs-num.c { color: var(--green-txt); }
+  .rs-num.w { color: var(--red-txt); }
+  .rs-label { font-size: .75rem; color: var(--text3); margin-top: .15rem; }
+  .result-actions { display: flex; flex-direction: column; gap: .6rem; }
+  .result-btn {
+    padding: .85rem;
+    border-radius: var(--r);
+    border: 1px solid var(--border2);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: .95rem;
+    font-weight: 600;
+    transition: all .15s;
+    -webkit-tap-highlight-color: transparent;
+    height: 48px;
+  }
+  .result-btn.primary {
+    background: var(--blue-txt);
+    border-color: var(--blue-txt);
+    color: #fff;
+    font-weight: 700;
+  }
+  .result-btn:hover { background: var(--surface); border-color: var(--blue-bdr); color: var(--blue-txt); }
+  .result-btn.primary:hover { opacity: .88; background: var(--blue-txt); color: #fff; }
+
+  /* ── WRONG LIST ── */
+  #wrong-review { flex-direction: column; }
+  .wrong-list { flex: 1; overflow-y: auto; padding: .85rem 1rem; }
+  .wrong-item {
+    padding: .9rem 1rem;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    margin-bottom: .6rem;
+  }
+  .wrong-item-q { font-size: .95rem; line-height: 1.7; margin-bottom: .45rem; color: var(--text); }
+  .wrong-item-meta { font-size: .85rem; color: var(--text3); }
+  .wrong-item-meta span { margin-right: 1rem; display: inline-block; }
+  .wrong-item-meta .ans { color: var(--green-txt); font-weight: 700; }
+  .wrong-item-meta .your { color: var(--red-txt); font-weight: 700; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: var(--bg);
+    border-radius: 8px;
+    padding: .6rem 1.2rem;
+    font-size: .88rem;
+    font-weight: 600;
+    opacity: 0;
+    transition: all .25s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── THEME TOGGLE ── */
+  .theme-toggle {
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+    flex-shrink: 0;
+    color: var(--text2);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .theme-toggle:hover, .theme-toggle:active { border-color: var(--blue-bdr); color: var(--blue-txt); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  @media (max-width: 480px) {
+    .menu-grid { grid-template-columns: 1fr 1fr; }
+    .home-inner { padding: 0 .25rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div style="position:absolute;top:1.2rem;right:1.5rem;">
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn-home" title="切換主題">🌙</button>
+  </div>
+  <div class="home-inner">
+    <div class="badge">債權委外認證</div>
+    <h1>題庫<span>練習</span>系統</h1>
+    <p class="subtitle">265 道題目，涵蓋民法、消費者保護法與相關法規，<br>完整練習或模擬正式考試。</p>
+    <div class="home-stats">
+      <div class="stat-item"><div class="stat-num">265</div><div class="stat-label">題目總數</div></div>
+      <div class="stat-item"><div class="stat-num">80</div><div class="stat-label">模擬考題數</div></div>
+      <div class="stat-item"><div class="stat-num">70</div><div class="stat-label">及格分數</div></div>
+    </div>
+    <div class="menu-grid">
+      <button class="menu-btn primary" onclick="startPractice()">
+        <span class="btn-icon">📚</span>
+        <span class="btn-label">全部練習</span>
+        <span class="btn-sub">265 題，含即時解析</span>
+      </button>
+      <button class="menu-btn" onclick="startExam()">
+        <span class="btn-icon">📝</span>
+        <span class="btn-label">模擬考試</span>
+        <span class="btn-sub">隨機 80 題 · 每題 1.25 分</span>
+      </button>
+      <button class="menu-btn marked-btn" onclick="startMarkedPractice()" id="marked-home-btn">
+        <span class="btn-icon">⭐</span>
+        <span class="btn-label">錯誤標記練習 <span class="marked-count-badge" id="marked-count-badge">0</span></span>
+        <span class="btn-sub">練習已標記題目</span>
+      </button>
+      <button class="menu-btn" onclick="showWrongList()">
+        <span class="btn-icon">📋</span>
+        <span class="btn-label">錯誤記錄</span>
+        <span class="btn-sub">上次模擬考錯題</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PRACTICE / MARKED PRACTICE -->
+<div id="practice" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goHome()">← 返回</button>
+    <span class="topbar-title" id="practice-title">全部練習</span>
+    <div style="display:flex;align-items:center;gap:.6rem;">
+      <span class="topbar-info" id="practice-info"></span>
+      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="practice-progress"></div></div>
+  <div class="q-area" id="practice-area"></div>
+  <div class="q-nav">
+    <button class="nav-btn" id="prac-prev" onclick="practiceNav(-1)">← 上一題</button>
+    <button class="nav-btn next-btn" id="prac-next" onclick="practiceNav(1)">下一題 →</button>
+  </div>
+</div>
+
+<!-- EXAM -->
+<div id="exam" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="confirmExitExam()">← 離開</button>
+    <span class="topbar-title">模擬考試</span>
+    <div style="display:flex;align-items:center;gap:.6rem;">
+      <span class="topbar-info" id="exam-info"></span>
+      <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="exam-progress"></div></div>
+  <div class="q-area" id="exam-area"></div>
+  <div class="q-nav">
+    <button class="nav-btn" id="exam-prev" onclick="examNav(-1)">← 上一題</button>
+    <button class="nav-btn" id="exam-end" onclick="submitExam()" style="color:var(--red-txt);border-color:var(--red-bdr);">結束作答</button>
+    <button class="nav-btn next-btn" id="exam-next" onclick="examNav(1)">下一題 →</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <div style="position:absolute;top:1.2rem;right:1.5rem;">
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+  </div>
+  <div class="result-inner">
+    <div class="result-score" id="result-score"></div>
+    <div class="result-verdict" id="result-verdict"></div>
+    <div class="result-stats">
+      <div class="rs-item"><div class="rs-num" id="rs-total">-</div><div class="rs-label">作答題數</div></div>
+      <div class="rs-item"><div class="rs-num c" id="rs-correct">-</div><div class="rs-label">答對</div></div>
+      <div class="rs-item"><div class="rs-num w" id="rs-wrong">-</div><div class="rs-label">答錯</div></div>
+    </div>
+    <div class="result-actions">
+      <button class="result-btn primary" onclick="reviewExam()">檢視本次答題詳情</button>
+      <button class="result-btn" onclick="startExam()">再考一次</button>
+      <button class="result-btn" onclick="goHome()">返回首頁</button>
+    </div>
+  </div>
+</div>
+
+<!-- WRONG REVIEW (exam review / wrong list) -->
+<div id="wrong-review" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" id="wrong-review-back" onclick="goHome()">← 返回</button>
+    <span class="topbar-title" id="wrong-review-title">錯誤記錄</span>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+  </div>
+  <div class="wrong-list" id="wrong-list-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const QUESTIONS = [{"題號": 1, "題目": "人之權利能力，始於____，終於____？", "答案A": "死亡；出生", "答案B": "出生；死亡", "答案C": "成年；死亡", "答案D": "未成年；死亡", "答案": "B"}, {"題號": 2, "題目": "關於受監護宣告之人，下列敘述何正確？", "答案A": "有完全行為能力", "答案B": "有限制行為能力", "答案C": "無行為能力", "答案D": "以上皆非", "答案": "C"}, {"題號": 3, "題目": "依民法規定，下列何人有限制行為能力？", "答案A": "未滿七歲之未成年人", "答案B": "受監護宣告之人", "答案C": "滿七歲以上之未成年人", "答案D": "成年人", "答案": "C"}, {"題號": 4, "題目": "對於因精神障礙或其他心智缺陷，致不能為意思表示或受意思表示，或不能辨識其意思表示 之效果者，法院得因特定人之聲請，為下列何者？", "答案A": "輔助宣告", "答案B": "監護宣告", "答案C": "成年宣告", "答案D": "未成年宣告", "答案": "B"}, {"題號": 5, "題目": "對於因精神障礙或其他心智缺陷，致其為意思表示或受意思表示，或辨識其意思表示效果之能力，顯有不足者，法院得因特定人之聲請，為下列何者？", "答案A": "輔助宣告", "答案B": "監護宣告", "答案C": "成年宣告", "答案D": "未成年宣告", "答案": "A"}, {"題號": 6, "題目": "受監護宣告之人應置？", "答案A": "監護人", "答案B": "輔助人", "答案C": "監護人與輔助人", "答案D": "以上皆非", "答案": "A"}, {"題號": 7, "題目": "受輔助宣告之人應置？", "答案A": "監護人", "答案B": "輔助人", "答案C": "監護人與輔助人", "答案D": "以上皆非", "答案": "B"}, {"題號": 8, "題目": "依據民法，請求權因幾年不行使而消滅？", "答案A": "1 年", "答案B": "2 年", "答案C": "5 年", "答案D": "15 年", "答案": "D"}, {"題號": 9, "題目": "依民法規定，借款本金請求權之消滅時效為幾年？", "答案A": "十五年", "答案B": "十年", "答案C": "五年", "答案D": "二年", "答案": "A"}, {"題號": 10, "題目": "依據民法，利息、紅利、租金、贍養費、退職金及其他一年或不及一年之定期給付債權，其請求權因幾年間不行使而消滅？", "答案A": "1 年", "答案B": "2 年", "答案C": "5 年", "答案D": "15 年", "答案": "C"}, {"題號": 11, "題目": "依民法規定，利息之請求權消滅時效為幾年？", "答案A": "一年", "答案B": "三年", "答案C": "五年", "答案D": "十五年", "答案": "C"}, {"題號": 12, "題目": "依據民法，技師、承攬人之報酬及其墊款，其請求權因幾年間不行使而消滅？", "答案A": "1 年", "答案B": "2 年", "答案C": "5 年", "答案D": "15 年", "答案": "B"}, {"題號": 13, "題目": "依據民法，商人、製造人、手工業人所供給之商品及產物之代價，其請求權因幾年間不行使而消滅？", "答案A": "1 年", "答案B": "2 年", "答案C": "5 年", "答案D": "15 年", "答案": "B"}, {"題號": 14, "題目": "請求權會因下列何者而中斷？ 甲、請求；乙、承認；丙、起訴；丁、聲請調解", "答案A": "僅甲", "答案B": "僅甲乙", "答案C": "僅甲乙丙", "答案D": "甲乙丙丁", "答案": "D"}, {"題號": 15, "題目": "時效因請求而中斷者，若於請求後多久內不起訴，視為不中斷？", "答案A": "一個月", "答案B": "三個月", "答案C": "六個月", "答案D": "一年", "答案": "C"}, {"題號": 16, "題目": "下列何者非屬中斷時效的方式", "答案A": "聲請強制執行", "答案B": "申報和解債權或破產債權", "答案C": "聲請調解或提付仲裁", "答案D": "請求後超過六個月不起訴", "答案": "D"}, {"題號": 17, "題目": "下列何者無中斷消滅時效之效力？", "答案A": "因和解而傳喚", "答案B": "申報破產債權", "答案C": "聲請強制執行", "答案D": "依督促程序，聲請發支付命令", "答案": "A"}, {"題號": 18, "題目": "依民法規定，有關債權請求權之消滅時效期間，下列敘述何者正確？", "答案A": "時效期間不得以契約約定減短，但可以加長", "答案B": "時效期間不得以契約約定加長，但可以減短", "答案C": "時效期間得由簽約當事人依約定予以減短或加長", "答案D": "時效期間不得由簽約當事人依約定予以減短或加長", "答案": "D"}, {"題號": 19, "題目": "時效期間，____以法律行為加長或減短之，並____預先拋棄時效之利益？", "答案A": "得；得", "答案B": "得；不得", "答案C": "不得；得", "答案D": "不得；不得", "答案": "D"}, {"題號": 20, "題目": "民法規定之消滅時效，除以不行為為目的之請求權外，自何時起算？", "答案A": "自請求權發生時起算", "答案B": "自請求權可行使時起算", "答案C": "自請求權發生起15 年後起算", "答案D": "自請求權可行使時 5 年後起算", "答案": "B"}, {"題號": 21, "題目": "下列關於消滅時效起算之敘述，何者正確？", "答案A": "消滅時效，自為行為時起算。以不行為為目的之請求權，亦同", "答案B": "消滅時效，自請求權可行使時起算，以不行為為目的之請求權，亦同", "答案C": "消滅時效，自為行為時起算。以不行為為目的之請求權，自請求權可行使時起算", "答案D": "消滅時效，自請求權可行使時起算。以不行為為目的之請求權，自為行為時起算", "答案": "D"}, {"題號": 22, "題目": "應付利息之債務，其利率未經約定，亦無法律可據者，週年利率為？", "答案A": 0.05, "答案B": 0.1, "答案C": 0.12, "答案D": 0.16, "答案": "A"}, {"題號": 23, "題目": "約定利率，超過週年利率多少者，超過部分之約定，無效？", "答案A": 0.05, "答案B": 0.1, "答案C": 0.12, "答案D": 0.16, "答案": "D"}, {"題號": 24, "題目": "約定利率逾週年____者，經____後，債務人得隨時清償原本？", "答案A": "12%；1 個月", "答案B": "12%；1 年", "答案C": "16%；1 個月", "答案D": "16%；1 年", "答案": "B"}, {"題號": 25, "題目": "有關民法及票據法對利率之規範，下列何者錯誤？", "答案A": "以簽發票據為債權憑證，而利率未經約定載明時，以年息 6%為所適用之利率", "答案B": "以契約、借據為債權憑證，而利率未經約定載明時，以年息 5%為所適用之利率", "答案C": "約定利率超過12%者，債務人可在一年後隨時清償原本，無須預告債權人", "答案D": "約定利率超過週年16%者，超過部分之約定，無效 ", "答案": "C"}, {"題號": 26, "題目": "撤銷權，自債權人知有撤銷原因時起，多久期間內不行使而消滅？", "答案A": "1 年", "答案B": "2 年", "答案C": "5 年", "答案D": "10 年", "答案": "A"}, {"題號": 27, "題目": "撤銷權，自行為時起，經過多久期間內而消滅？", "答案A": "1 年", "答案B": "2 年", "答案C": "5 年", "答案D": "10 年", "答案": "D"}, {"題號": 28, "題目": "甲為逃避銀行債務，將其不動產贈與移轉登記予乙，銀行為保障其債權，得對該贈與行為，向法院主張何種權利？", "答案A": "撤銷權", "答案B": "抵銷權", "答案C": "代位權", "答案D": "抗辯權", "答案": "A"}, {"題號": 29, "題目": "抵押權人，於消滅時效完成後，多久期間不實行其抵押權者，其抵押權消滅？", "答案A": "2 年", "答案B": "5 年", "答案C": "15 年", "答案D": "30 年", "答案": "B"}, {"題號": 30, "題目": "最高限額抵押權得約定其所擔保原債權應確定之期日，確定之期日不得逾？", "答案A": "2 年", "答案B": "5 年", "答案C": "15 年", "答案D": "30 年", "答案": "D"}, {"題號": 31, "題目": "最高限額抵押權所擔保之原債權，未約定確定之期日者，抵押人或抵押權人得隨時請求確定其所擔保之原債權。自請求之日起，經幾日為其確定期日？", "答案A": "10 日", "答案B": "15 日", "答案C": "20 日", "答案D": "30 日", "答案": "B"}, {"題號": 32, "題目": "妻婚前財產，於婚姻關係存續中所生之孳息，視為？", "答案A": "夫婚前財產", "答案B": "夫婚後財產", "答案C": "妻婚前財產", "答案D": "妻婚後財產", "答案": "D"}, {"題號": 33, "題目": "法定財產制關係消滅時，夫或妻現存之婚後財產，扣除婚姻關係存續所負債務後，如有剩餘， 其雙方剩餘財產之差額，應？", "答案A": "夫 2/3、妻 1/3", "答案B": "夫 1/3、妻 2/3", "答案C": "夫 1/4、妻 3/4", "答案D": "夫妻平均分配", "答案": "D"}, {"題號": 34, "題目": "法定財產制關係消滅時，夫或妻現存之婚後財產，扣除婚姻關係存續所負債務後，如有剩餘， 其雙方剩餘財產之差額，應平均分配。剩餘財產差額之分配請求權，自請求權人知有剩餘財 產之差額時起，____間不行使而消滅。自法定財產制關係消滅時起，逾____者，亦同？", "答案A": "1 年、5 年", "答案B": "1 年、10 年", "答案C": "2 年、5 年", "答案D": "2 年、10 年", "答案": "C"}, {"題號": 35, "題目": "甲與乙結婚，未生子女，嗣後甲死亡，遺有父母丙、丁，就甲之遺產，各繼承人之法定應繼分為多少？", "答案A": "乙丙丁各為 1/3", "答案B": "乙為 1/2，丙丁各為 1/4", "答案C": "乙丙各為 1/2", "答案D": "乙為全部", "答案": "B"}, {"題號": 36, "題目": "依民法規定，某甲死亡時，有父母、配偶、未成年兒子二人、女兒一人，其遺產應如何繼承？", "答案A": "配偶與兒子共三人平均繼承", "答案B": "配偶繼承二分之一，兒子與女兒共三人繼承二分之一", "答案C": "配偶、兒子與女兒共四人平均繼承", "答案D": "父母與兒子共四人平均繼承", "答案": "C"}, {"題號": 37, "題目": "夫妻無子女，惟各有父母兄弟健在。夫死未立遺囑，其所留遺產應由何人繼承？", "答案A": "妻單獨繼承", "答案B": "由夫之兄弟繼承", "答案C": "由夫之父母繼承", "答案D": "由妻與夫之父母共同繼承", "答案": "D"}, {"題號": 38, "題目": "法院於知悉債權人以訴訟程序或非訟程序向繼承人請求清償繼承債務時，得依職權命繼承人 於幾個月內提出遺產清冊？", "答案A": 1, "答案B": 3, "答案C": 6, "答案D": 12, "答案": "B"}, {"題號": 39, "題目": "繼承人依上述規定陳報法院時，法院應依公示催告程序公告，命被繼承人之債權人於一定期 限內報明其債權。上述一定期間是指幾個月？", "答案A": 1, "答案B": 3, "答案C": 6, "答案D": 12, "答案": "B"}, {"題號": 40, "題目": "繼承人得拋棄其繼承權，但應於知悉其得繼承之時起幾個月內，以書面向法院為之？", "答案A": 1, "答案B": 3, "答案C": 6, "答案D": 12, "答案": "B"}, {"題號": 41, "題目": "繼承人應於知悉其得繼承之時起幾個月內開具遺產清冊陳報法院？", "答案A": 1, "答案B": 3, "答案C": 6, "答案D": 12, "答案": "B"}, {"題號": 42, "題目": "依據民事訴訟法，非因財產權而起訴，應徵收多少裁判費？", "答案A": "500 元", "答案B": "1,000 元", "答案C": "3,000 元", "答案D": "5,000 元", "答案": "C"}, {"題號": 43, "題目": "依據民事訴訟法，因財產權而起訴，且訴訟標的金額為 5 萬者，應徵收多少裁判費？", "答案A": "500 元", "答案B": "1,000 元", "答案C": "3,000 元", "答案D": "5,000 元", "答案": "B"}, {"題號": 44, "題目": "依據民事訴訟法，因財產權而起訴，且訴訟標的金額為 10 萬者，應徵收多少裁判費？", "答案A": "500 元", "答案B": "1,000 元", "答案C": "3,000 元", "答案D": "5,000 元", "答案": "B"}, {"題號": 45, "題目": "依據民事訴訟法，因財產權而起訴，且訴訟標的金額為 150 萬者，應徵收多少裁判費？", "答案A": "1,000 元", "答案B": "1,500 元", "答案C": "13,500 元", "答案D": "15,000 元", "答案": "C"}, {"題號": 46, "題目": "訴狀，應與言詞辯論期日之通知書，一併送達於被告。前項送達，距言詞辯論之期日，至少 應有幾日為就審期間？", "答案A": 10, "答案B": 15, "答案C": 20, "答案D": 30, "答案": "A"}, {"題號": 47, "題目": "訴訟達於可為裁判之程度者，法院應為？", "答案A": "一造辯論判決", "答案B": "二造辯論判決", "答案C": "終局判決", "答案D": "起訴", "答案": "C"}, {"題號": 48, "題目": "提起上訴，應於第一審判決送達後幾日之不變期間內為之？", "答案A": 10, "答案B": 15, "答案C": 20, "答案D": 30, "答案": "C"}, {"題號": 49, "題目": "財產權之訴訟，其標的金額在新臺幣____元以下者，適用簡易程序？", "答案A": "10 萬", "答案B": "50 萬", "答案C": "100 萬", "答案D": "1,000 萬", "答案": "B"}, {"題號": 50, "題目": "財產權之訴訟，其標的金額在新臺幣____元以下者，適用小額程序？", "答案A": "10 萬", "答案B": "50 萬", "答案C": "100 萬", "答案D": "1,000 萬", "答案": "A"}, {"題號": 51, "題目": "發支付命令後，多久期間內不能送達於債務人者，其命令失其效力？", "答案A": "1 個月", "答案B": "3 個月", "答案C": "6 個月", "答案D": "1 年", "答案": "B"}, {"題號": 52, "題目": "債務人對於支付命令之全部或一部，得於送達後幾日之不變期間內，不附理由向發命令之法 院提出異議？", "答案A": 10, "答案B": 15, "答案C": 20, "答案D": 30, "答案": "C"}, {"題號": 53, "題目": "下列關於假扣押與假處分之敘述，何者正確？", "答案A": "假扣押與假處分目標皆為金錢", "答案B": "假扣押與假處分目標皆為金錢以外之請求", "答案C": "假扣押目標為金錢；假處分目標為金錢以外之請求", "答案D": "假扣押目標為金錢以外之請求；假處分目標為金錢", "答案": "C"}, {"題號": 54, "題目": "銀行發現逾期放款戶有隱匿財產，惟恐將來不能強制執行，為保全強制執行，銀行應聲請何種執行名義？", "答案A": "假扣押", "答案B": "假處分", "答案C": "假執行", "答案D": "假判決", "答案": "A"}, {"題號": 55, "題目": "債務人之戶籍地在台中市，現在台北市工作，其債權人營業所在地位於新北市，強制執行之標的物在桃園市，則應向下列何法院聲請強制執行？", "答案A": "台北地院", "答案B": "台中地院", "答案C": "桃園地院", "答案D": "新北地院", "答案": "C"}, {"題號": 56, "題目": "戶籍地於高雄市而在台北市上班之甲，其按月向台南市總公司領取之薪津遭台中某銀行聲請執行，其強制執行管轄法院為何？", "答案A": "高雄地院", "答案B": "台北地院", "答案C": "台南地院", "答案D": "台中地院", "答案": "C"}, {"題號": 57, "題目": "依據民事訴訟法第 1 條，訴訟原則上應由下列何法院管轄？", "答案A": "告訴人住所地", "答案B": "告訴人居所地", "答案C": "被告住所地", "答案D": "被告居所地", "答案": "C"}, {"題號": 58, "題目": "民法所定抵押權人、質權人、留置權人及依其他法律所定擔保物權人聲請拍賣擔保物事件， 由下列何處之法院管轄？", "答案A": "拍賣物所在地", "答案B": "抵押權人住所所在地", "答案C": "質權人住所所在地", "答案D": "留置權人住所所在地", "答案": "A"}, {"題號": 59, "題目": "依據「消費者債務清理條例」，更生及清算事件專屬何處之地方法院管轄？", "答案A": "債權人住所地或居所地", "答案B": "債務人住所地或居所地", "答案C": "保證人住所地或居所地", "答案D": "以上皆非", "答案": "B"}, {"題號": 60, "題目": "實施強制執行時，經債權人同意者，執行法院得延緩執行。前項延緩執行之期限不得逾？", "答案A": "1 個月", "答案B": "3 個月", "答案C": "6 個月", "答案D": "1 年", "答案": "B"}, {"題號": 61, "題目": "債權人聲請續行執行而再同意延緩執行者，以幾次為限？", "答案A": "1 次", "答案B": "2 次", "答案C": "3 次", "答案D": "5 次", "答案": "A"}, {"題號": 62, "題目": "實施強制執行時，可以？", "答案A": "延緩一次共三個月", "答案B": "延緩一次共六個月", "答案C": "延緩二次共三個月", "答案D": "延緩二次共六個月", "答案": "D"}, {"題號": 63, "題目": "每次延緩期間屆滿後，債權人經執行法院通知而不於幾日內聲請續行執行者，視為撤回其強制執行之聲請？", "答案A": "5 日", "答案B": "10 日", "答案C": "20 日", "答案D": "30 日", "答案": "B"}, {"題號": 64, "題目": "依強制執行法規定，強制執行之費用應由下列何者負擔？", "答案A": "債權人", "答案B": "債務人", "答案C": "債權人及債務人平均分擔", "答案D": "法院", "答案": "B"}, {"題號": 65, "題目": "依強制執行法規定，民事強制執行之執行標的金額或價額超過新臺幣五千元者，執行費為每百元徵收多少？", "答案A": "三角", "答案B": "五角", "答案C": "七角", "答案D": "一元", "答案": "C"}, {"題號": 66, "題目": "假扣押強制執行事件，其執行標的金額為新臺幣三百萬元，則應繳納執行費新臺幣多少元？", "答案A": "30,000 元", "答案B": "21,000 元", "答案C": "15,000 元", "答案D": "10,500 元", "答案": "B"}, {"題號": 67, "題目": "執行管收，由執達員將應管收人送交管收所。管收期限不得逾？", "答案A": "1 個月", "答案B": "3 個月", "答案C": "6 個月", "答案D": "1 年", "答案": "B"}, {"題號": 68, "題目": "他債權人參與分配者，應於標的物拍賣、變賣終結或依法交債權人承受之日____日前，其不 經拍賣或變賣者，應於當次分配表作成之日____日前，以書狀聲明之？", "答案A": "1；1", "答案B": "1；5", "答案C": "5；1", "答案D": "10；10", "答案": "A"}, {"題號": 69, "題目": "他債權人參與分配者，其不經拍賣或變賣者，應於當次分配表作成之日何時，以書狀聲明之？", "答案A": "1 日前", "答案B": "1 日後", "答案C": "7 日前", "答案D": "7 日後", "答案": "A"}, {"題號": 70, "題目": "甲銀行撥貸一筆無擔保放款給乙，屆期未還，經對乙取得確定勝訴判決。假設乙之唯一財產 遭法院強制執行，並於105 年 7 月 6 日（星期三）拍定，請問甲銀行如欲參與分配，至遲應 於何日遞狀聲明？", "答案A": "105 年7 月 4 日", "答案B": "105 年 7 月 5 日", "答案C": "105 年 7 月 6 日", "答案D": "105 年 7 月 7 日", "答案": "B"}, {"題號": 71, "題目": "銀行之不動產抵押物若遭第三人聲請強制執行，即將進行拍賣，銀行應立刻採取下列何種法", "答案A": "假扣押", "答案B": "假處分", "答案C": "參與分配", "答案D": "聲請支付命令 ", "答案": "C"}, {"題號": 72, "題目": "下列何者非屬動產強制執行之方法？", "答案A": "查封", "答案B": "變賣", "答案C": "拍賣", "答案D": "強制管理", "答案": "D"}, {"題號": 73, "題目": "下列何者之物得查封？", "答案A": "祭祀、禮拜所用之物", "答案B": "債務人所受或繼承之勳章", "答案C": "已發表之發明", "答案D": "尚未發表之著作", "答案": "C"}, {"題號": 74, "題目": "下列何者非屬不動產強制執行之方法？", "答案A": "查封", "答案B": "變賣", "答案C": "拍賣", "答案D": "強制管理", "答案": "B"}, {"題號": 75, "題目": "依強制執行法規定，拍賣不動產未拍定，執行法院再行拍賣時均會酌減拍賣最低價額，酌減數額不得逾多少？", "答案A": "百分之五", "答案B": "百分之十", "答案C": "百分之十五", "答案D": "百分之二十", "答案": "D"}, {"題號": 76, "題目": "依強制執行法規定，經幾次減價拍賣而未拍定之不動產，債權人不願承受時，即進入特別拍賣程序？", "答案A": "一次", "答案B": "二次", "答案C": "三次", "答案D": "四次", "答案": "B"}, {"題號": 77, "題目": "依強制執行法規定 ， 不動產經二次減價拍賣未拍定 ， 債權人亦不願承受時 ， 其後續程序為何？", "答案A": "發還債務人", "答案B": "進入強制管理程序", "答案C": "進入特別拍賣程序", "答案D": "視為撤回強制執行", "答案": "C"}, {"題號": 78, "題目": "依強制執行法規定，特別拍賣程序期限為何？", "答案A": "一個月", "答案B": "二個月", "答案C": "三個月", "答案D": "四個月", "答案": "C"}, {"題號": 79, "題目": "不動產之執行於「特別拍賣程序」期間，如仍無人應買，債權人亦未提出減價或另行估價拍賣或聲明承受者，其效果如何？", "答案A": "視為全部執行程序終結", "答案B": "視為合意停止執行程序", "答案C": "視為撤回全部執行程序", "答案D": "視為撤回該不動產之強制執行", "答案": "D"}, {"題號": 80, "題目": "依強制執行法規定，拍賣之不動產，買受人自何時取得該不動產之所有權？", "答案A": "領得執行法院發給權利移轉證書之日起", "答案B": "地政機關完成移轉登記時", "答案C": "執行法院核可之日", "答案D": "債權人同意時", "答案": "A"}, {"題號": 81, "題目": "依據刑法第 18 條，未滿____歲人之行為，不罰？", "答案A": 7, "答案B": 14, "答案C": 17, "答案D": 18, "答案": "B"}, {"題號": 82, "題目": "下列何者非刑法「不罰」之行為？", "答案A": "未滿14 歲人之行為", "答案B": "瘖啞人之行為", "答案C": "依所屬上級公務員命令但不明知命令違法之職務上行為", "答案D": "依法令之行為", "答案": "B"}, {"題號": 83, "題目": "意圖供行使之用，而偽造、變造公債票、公司股票或其他有價證券者，罰則為？", "答案A": "處一年以下有期徒刑、拘役或九千元以下罰金", "答案B": "處一年以上七年以下有期徒刑，得併科九萬元以下罰金", "答案C": "處三年以上十年以下有期徒刑，得併科九萬元以下罰金", "答案D": "處三年以下有期徒刑、拘役或科或併科三十萬元以下罰金", "答案": "C"}, {"題號": 84, "題目": "意圖供行使之用，而偽造、變造信用卡、金融卡、儲值卡或其他相類作為簽帳、提款、轉帳 或支付工具之電磁紀錄物者，罰則為？", "答案A": "處一年以下有期徒刑、拘役或九千元以下罰金", "答案B": "處一年以上七年以下有期徒刑，得併科九萬元以下罰金", "答案C": "處三年以上十年以下有期徒刑，得併科九萬元以下罰金", "答案D": "處三年以下有期徒刑、拘役或科或併科三十萬元以下罰金", "答案": "B"}, {"題號": 85, "題目": "偽造、變造私文書，足以生損害於公眾或他人者，罰則為？", "答案A": "處三年以下有期徒刑", "答案B": "處五年以下有期徒刑", "答案C": "處一年以上七年以下有期徒刑", "答案D": "處一年以下有期徒刑、拘役或九千元以下罰金", "答案": "B"}, {"題號": 86, "題目": "偽造、變造公文書，足以生損害於公眾或他人者，罰則為？", "答案A": "處三年以下有期徒刑", "答案B": "處五年以下有期徒刑", "答案C": "處一年以上七年以下有期徒刑", "答案D": "處一年以下有期徒刑、拘役或九千元以下罰金", "答案": "C"}, {"題號": 87, "題目": "偽造、變造護照、旅券、免許證、特許證及關於品行、能力、服務或其他相類之證書、介紹 書，足以生損害於公眾或他人者，罰則為？", "答案A": "處三年以下有期徒刑", "答案B": "處五年以下有期徒刑", "答案C": "處一年以上七年以下有期徒刑", "答案D": "處一年以下有期徒刑、拘役或九千元以下罰金", "答案": "D"}, {"題號": 88, "題目": "公然侮辱人者，罰則為？", "答案A": "處拘役或九千元以下罰金", "答案B": "處一年以下有期徒刑、拘役或三萬元以下罰金", "答案C": "處一年以下有期徒刑、拘役或一萬五千元以下罰金", "答案D": "處三年以下有期徒刑、拘役或科或併科三十萬元以下罰金", "答案": "A"}, {"題號": 89, "題目": "對於已死之人公然侮辱者，罰則為？", "答案A": "處拘役或九千元以下罰金", "答案B": "處一年以下有期徒刑、拘役或三萬元以下罰金", "答案C": "處一年以下有期徒刑、拘役或一萬五千元以下罰金", "答案D": "處三年以下有期徒刑、拘役或科或併科三十萬元以下罰金", "答案": "A"}, {"題號": 90, "題目": "無故利用工具或設備窺視、竊聽他人非公開之活動、言論、談話或身體隱私部位者，罰則為？", "答案A": "處三年以下有期徒刑、拘役或三十萬元以下罰金", "答案B": "處三年以下有期徒刑、拘役或五十萬元以下罰金", "答案C": "處五年以下有期徒刑、拘役或五十萬元以下罰金", "答案D": "處五年以下有期徒刑、拘役或六十萬元以下罰金", "答案": "A"}, {"題號": 91, "題目": "無故以錄音、照相、錄影或電磁紀錄竊錄他人非公開之活動、言論、談話或身體隱私部位者， 罰則為？", "答案A": "處三年以下有期徒刑、拘役或三十萬元以下罰金", "答案B": "處三年以下有期徒刑、拘役或五十萬元以下罰金", "答案C": "處五年以下有期徒刑、拘役或五十萬元以下罰金", "答案D": "處五年以下有期徒刑、拘役或六十萬元以下罰金", "答案": "A"}, {"題號": 92, "題目": "意圖為自己或第三人不法之所有，而侵占自己持有他人之物者，罰則為？", "答案A": "處三年以下有期徒刑、拘役或科或併科三萬元以下罰金", "答案B": "處三年以下有期徒刑、拘役或科或併科五萬元以下罰金", "答案C": "處五年以下有期徒刑、拘役或科或併科三萬元以下罰金", "答案D": "處五年以下有期徒刑、拘役或科或併科五萬元以下罰金", "答案": "C"}, {"題號": 93, "題目": "意圖為自己或第三人不法之所有，以詐術使人將本人或第三人之物交付者，罰則為？", "答案A": "處三年以下有期徒刑、拘役或科或併科三十萬元以下罰金", "答案B": "處三年以下有期徒刑、拘役或科或併科五十萬元以下罰金", "答案C": "處五年以下有期徒刑、拘役或科或併科五十萬元以下罰金", "答案D": "處五年以下有期徒刑、拘役或科或併科六十萬元以下罰金", "答案": "C"}, {"題號": 94, "題目": "乘他人急迫、輕率、無經驗或難以求助之處境，貸以金錢或其他物品，而取得與原本顯不相 當之重利者，罰則為？", "答案A": "處三年以下有期徒刑、拘役或科或併科三十萬元以下罰金", "答案B": "處三年以下有期徒刑、拘役或科或併科五十萬元以下罰金", "答案C": "處五年以下有期徒刑、拘役或科或併科五十萬元以下罰金", "答案D": "處五年以下有期徒刑、拘役或科或併科六十萬元以下罰金", "答案": "A"}, {"題號": 95, "題目": "債務人於將受強制執行之際，意圖損害債權人之債權，而毀壞、處分或隱匿其財產者，罰則為？", "答案A": "處二年以下有期徒刑、拘役或九千元以下罰金", "答案B": "處二年以下有期徒刑、拘役或一萬五千元以下罰金", "答案C": "處三年以下有期徒刑、拘役或九千元以下罰金", "答案D": "處三年以下有期徒刑、拘役或一萬五千元以下罰金", "答案": "B"}, {"題號": 96, "題目": "無故輸入他人帳號密碼、破解使用電腦之保護措施或利用電腦系統之漏洞，而入侵他人之電腦 或其相關設備者，罰則為？", "答案A": "處三年以下有期徒刑、拘役或科或併科三十萬元以下罰金", "答案B": "處三年以下有期徒刑、拘役或科或併科五十萬元以下罰金", "答案C": "處五年以下有期徒刑、拘役或科或併科五十萬元以下罰金", "答案D": "處五年以下有期徒刑、拘役或科或併科六十萬元以下罰金", "答案": "A"}, {"題號": 97, "題目": "無故取得、刪除或變更他人電腦或其相關設備之電磁紀錄，致生損害於公眾或他人者，罰則為？", "答案A": "處三年以下有期徒刑、拘役或科或併科三十萬元以下罰金", "答案B": "處三年以下有期徒刑、拘役或科或併科五十萬元以下罰金", "答案C": "處五年以下有期徒刑、拘役或科或併科五十萬元以下罰金", "答案D": "處五年以下有期徒刑、拘役或科或併科六十萬元以下罰金", "答案": "D"}, {"題號": 98, "題目": "無故以電腦程式或其他電磁方式干擾他人電腦或其相關設備，致生損害於公眾或他人者，罰則為？", "答案A": "處三年以下有期徒刑、拘役或科或併科三十萬元以下罰金", "答案B": "處三年以下有期徒刑、拘役或科或併科五十萬元以下罰金", "答案C": "處五年以下有期徒刑、拘役或科或併科五十萬元以下罰金", "答案D": "處五年以下有期徒刑、拘役或科或併科六十萬元以下罰金", "答案": "A"}, {"題號": 99, "題目": "意圖散布於眾，而指摘或傳述足以毀損他人名譽之事者，為？", "答案A": "公然侮辱罪", "答案B": "誹謗罪", "答案C": "普通詐欺罪", "答案D": "侮辱誹謗死者罪", "答案": "B"}, {"題號": 100, "題目": "意圖為自己或第三人不法之所有，以詐術使人將本人或第三人之物交付者，為？", "答案A": "重利罪", "答案B": "誹謗罪", "答案C": "普通詐欺罪", "答案D": "加重詐欺罪", "答案": "C"}, {"題號": 101, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，銀行對資產負債表表內及表外之授信資產共分為幾類？", "答案A": "6 類", "答案B": "5 類", "答案C": "4 類", "答案D": "3 類", "答案": "B"}, {"題號": 102, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，銀行對授信資產評估之分類，下列何者錯誤？", "答案A": "第一類為正常者", "答案B": "第二類為可望收回者", "答案C": "第四類為收回有困難者", "答案D": "第五類為收回無望者", "答案": "B"}, {"題號": 103, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，各類不良授信資產中，授信資產經評估有足額擔保部分，且授信戶積欠本金或利息超過清償期一個月至十二個月者，應列入下列何者？", "答案A": "應予注意者", "答案B": "可望收回者", "答案C": "收回困難者", "答案D": "收回無望者", "答案": "A"}, {"題號": 104, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，授信資產經評估已 無擔保部分，且授信戶積欠本金或利息超過清償期三個月至六個月者，屬下列何類不良授信", "答案A": "應予注意者", "答案B": "可望收回者", "答案C": "收回困難者", "答案D": "收回無望者", "答案": "B"}, {"題號": 105, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，若甲在Ａ銀行之無擔保授信，其積欠本息超過清償期九個月，則該不良授信資產經評估應列於下列何者？", "答案A": "應予注意者", "答案B": "可望收回者", "答案C": "收回困難者", "答案D": "收回無望者", "答案": "C"}, {"題號": 106, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，有關「應予注意者」 之不良授信資產，下列敘述何者錯誤？", "答案A": "授信資產經評估有足額擔保部分，且授信戶所積欠本金或利息超過清償期1 個月至12 個月", "答案B": "授信資產經評估已無擔保部分，且授信戶積欠本金或利息超過清償期 1 個月至 3 個月", "答案C": "授信資產雖未屆清償期或到期日，但授信戶已有其他債信不良者", "答案D": "授信資產經評估已無擔保部分，且授信戶積欠本金及利息超過清償期 3 個月至 6 個月者", "答案": "D"}, {"題號": 107, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，有關銀行不良授信 資產需提列備抵呆帳及保證責任準備之敘述，下列何者正確？", "答案A": "第二類授信資產需提列債權餘額之百分之一", "答案B": "第三類授信資產需提列債權餘額之百分之五", "答案C": "第四類授信資產需提列債權餘額之百分之五十", "答案D": "第五類授信資產需提列債權餘額之百分之八十", "答案": "C"}, {"題號": 108, "題目": "依主管機關規定，授信案件屆期未還時，除符合特殊規定要件外，超過到期日多久以上應即列報為逾期放款？", "答案A": "二個月", "答案B": "三個月", "答案C": "六個月", "答案D": "一年", "答案": "B"}, {"題號": 109, "題目": "依「銀行資產評估損失準備提列及逾期放款催收呆帳處理辦法」規定，所稱之逾期放款，下 列何者錯誤？", "答案A": "積欠利息二個月未償還", "答案B": "積欠本金超過清償期三個月", "答案C": "積欠本金二個月，但已向主從債務人追訴", "答案D": "積欠本金一個月，但已向主從債務人處分擔保品", "答案": "A"}, {"題號": 110, "題目": "積欠本金或利息超過清償期三個月，或雖未超過三個月，但已向主、從債務人訴追或處分擔保品者，是指下列何者？", "答案A": "呆帳", "答案B": "逾期放款", "答案C": "催收款", "答案D": "違約金", "答案": "B"}, {"題號": 111, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，協議分期償還放款 符合一定條件，並依協議條件履行達多久以上，且協議利率不低於原承作利率或銀行新承作同類風險放款之利率者，得免予列報逾期放款？", "答案A": "三個月", "答案B": "六個月", "答案C": "一年", "答案D": "二年", "答案": "B"}, {"題號": 112, "題目": "依 「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」 規定 ， 下列敘述何者錯誤？", "答案A": "逾期放款係指積欠本金或利息超過清償期 3 個月或雖未超過 3 個月，但已向主、從債務 人訴追或處分擔保品者", "答案B": "符合免列報逾期放款之協議分期償還放款案件 ， 雖於免列報期間再發生未依約清償超過3 個月者，仍得不予列報", "答案C": "逾期放款及催收款逾清償期 2 年，經催收仍未收回者，應扣除估計可收回部分後轉銷為呆帳", "答案D": "逾期放款及催收款之轉銷，應先就提列之備抵呆帳或保證責任準備等項下沖抵", "答案": "B"}, {"題號": 113, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，下列何項之逾期放 款，應准免列入列報逾期放款範圍？", "答案A": "原係短期放款之協議分期償還案件，協議條件以每年償還本息在 8%以上", "答案B": "原係短期放款之協議分期償還案件，協議條件以每年償還本息 10%以上者為原則，惟期 限最長以五年為限", "答案C": "原係中長期放款者，其分期償還期限，以原殘餘年限之三倍為限", "答案D": "原係中長期放款者，其分期償還期限，以原殘餘年限之二倍為限，於原殘餘年限內，其分期償還之部分，不得低於積欠本息 10%", "答案": "B"}, {"題號": 114, "題目": "依主管機關規定，協議分期償還案件依免列報逾期放款之範圍，原係短期放款者，以每年償 還本息在 10%以上為原則，惟期限最長以幾年為限？", "答案A": "二年", "答案B": "三年", "答案C": "五年", "答案D": "十年", "答案": "C"}, {"題號": 115, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，下列何者符合中、 長期放款協議分期償還案件免列報為逾期放款之條件？", "答案A": "其分期償還期限，以原殘餘年限之二倍為限，惟最長不得超過三十年", "答案B": "於原殘餘年限內，其分期償還之部分不得低於積欠本息百分之二十", "答案C": "若已無殘餘年限，或殘餘年限之二倍未滿五年者，分期償還期限得延長為十年", "答案D": "每年償還本息在百分之五以上者，無年限限制", "答案": "A"}, {"題號": 116, "題目": "陳先生向 A 銀行申貸七年期週轉金貸款，已於今年3 月 10 日到期，因所提供抵押物被他債 權人查封而無法換約，倘依主管機關規定，辦理協議分期償還，符合免列報逾期放款之最長期限為何？", "答案A": "五年", "答案B": "七年", "答案C": "十四年", "答案D": "十五年", "答案": "A"}, {"題號": 117, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，協議分期償還中長 期放款案件免列列報逾期放款應符合之條件，如該筆中長期放款已無殘餘年限或殘餘年限之二倍未滿五年者，分期償還期限得延長為五年，但以每年最少償還本息在百分之多少以上為原則？", "答案A": 0.1, "答案B": 0.2, "答案C": 0.3, "答案D": 0.4, "答案": "A"}, {"題號": 118, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，逾期放款應於清償 期屆滿幾個月內轉入催收款科目，但經協議分期償還放款並依約履行者，不在此限？", "答案A": "三個月", "答案B": "四個月", "答案C": "六個月", "答案D": "七個月", "答案": "C"}, {"題號": 119, "題目": "誠一公司向銀行所借短期放款一筆，到期日為109.5.16，到期時，該公司未能依約還款或辦理展期，銀行最遲應於下列何時前轉入催收款項？", "答案A": "109.7.16", "答案B": "109.8.16", "答案C": "109.10.16", "答案D": "109.11.16", "答案": "D"}, {"題號": 120, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，逾期放款轉入催收 款科目，下列敘述何者錯誤？", "答案A": "逾期放款應於清償期屆滿六個月內轉入催收款科目", "答案B": "逾期放款轉入催收款項者，應停止計息", "答案C": "催收款係指經轉入催收款科目之各項放款及其他授信款項", "答案D": "逾期放款僅本金得轉入催收款，未收清之應收利息不得併同轉入", "答案": "D"}, {"題號": 121, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，銀行逾期放款轉入 催收款科目，下列敘述何者錯誤？", "答案A": "逾期放款轉入催收款者，應停止計息，但仍應依契約規定繼續催理", "答案B": "逾期放款轉入催收款者，視為符合消費者債務清償條例", "答案C": "逾期放款應於清償期屆滿六個月內轉入催收款科目", "答案D": "逾期放款未轉入催收款前應計之應收利息，仍未收清者，應連同本金一併轉入催收款", "答案": "B"}, {"題號": 122, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，逾期放款及催收款 逾清償期幾年，經催收仍未收回者，應扣除估計可收回部分後轉銷呆帳？", "答案A": "六年", "答案B": "一年", "答案C": "二年", "答案D": "三年", "答案": "C"}, {"題號": 123, "題目": "依「銀行資產評估損失準備提列及逾期放款催收款呆帳處理辦法」規定，逾期放款及催收款 項具有下列何種情況時，應扣除估計可以收回部份後即轉銷為呆帳？", "答案A": "債務人因遷移住所並完成戶籍變更者", "答案B": "擔保品及主、從債務人之財產鑑價甚低，或扣除先順位抵押權後，已無法受償，或執行 費用接近，或可能超過銀行可受償金額，執行無實益者", "答案C": "擔保品及主、從債務人之財產經多次減價拍賣後無人應買，但若由銀行出面承受顯有實 益者", "答案D": "逾期放款及催收款逾清償期一年，經催收仍未收回者", "答案": "B"}, {"題號": 124, "題目": "發卡機構變更條款，導致增加持卡人之可能負擔時，應於幾日前以顯著方式標示於書面或事 先與持卡人約定之電子文件通知持卡人？", "答案A": "5 日", "答案B": "7 日", "答案C": "30 日", "答案D": "60 日", "答案": "D"}, {"題號": 125, "題目": "信用卡契約約款如有修改或增刪時，發卡機構以書面、電子文件或其他持卡人同意之方式通 知持卡人後，持卡人於幾日內不為異議者，視同承認該修改或增刪約款？", "答案A": "5 日", "答案B": "7 日", "答案C": "30 日", "答案D": "60 日", "答案": "B"}, {"題號": 126, "題目": "「金融機構作業委託他人處理內部作業制度及程序辦法」是依據下列何者訂定之？", "答案A": "銀行法及民法", "答案B": "銀行法及金融機構辦理應收債權催收作業委外處理要點", "答案C": "信用合作社法及金融機構出售不良債權應注意事項", "答案D": "銀行法及信用合作社法", "答案": "D"}, {"題號": 127, "題目": "依據「金融機構作業委託他人處理內部作業制度及程序辦法」，下列何者委外事項得複委託？", "答案A": "信用卡發卡業務之行銷", "答案B": "應收債權之催收作業", "答案C": "房屋貸款行銷業務", "答案D": "內部稽核作業", "答案": "D"}, {"題號": 128, "題目": "依據「金融機構作業委託他人處理內部作業制度及程序辦法」，下列何者不得委外處理？", "答案A": "應收債權之催收作業", "答案B": "內部稽核作業", "答案C": "授信審核之准駁", "答案D": "代客開票作業", "答案": "C"}, {"題號": 129, "題目": "依據「金融機構辦理應收債權催收作業委外處理要點」 ，下列何者不符合受委託機構資格？", "答案A": "律師事務所", "答案B": "會計師事務所", "答案C": "戶政事務所", "答案D": "得辦理金融機構金錢債權管理服務業務之公司", "答案": "C"}, {"題號": 130, "題目": "依據「金融機構辦理應收債權催收作業委外處理要點」 ，受託機構虧損達實收資本額多少時， 不得為受委託機構？", "答案A": "1/3", "答案B": "1/4", "答案C": "1/5", "答案D": "1/6", "答案": "A"}, {"題號": 131, "題目": "依據「金融機構辦理應收債權催收作業委外處理要點」，所有電話暨外訪時均須予以錄音並 製作備份且至少保存幾個月以上？", "答案A": 1, "答案B": 3, "答案C": 6, "答案D": 12, "答案": "C"}, {"題號": 132, "題目": "依據「金融機構辦理應收債權催收作業委外處理要點」 ，催收時間一般最晚應為？", "答案A": "晚上八時", "答案B": "晚上九時", "答案C": "晚上十時", "答案D": "晚上十一時", "答案": "C"}, {"題號": 133, "題目": "依據「金融機構辦理應收債權催收作業委外處理要點」 ，催收時間一般應為？", "答案A": "上午七時至晚上九時", "答案B": "上午七時至晚上十時", "答案C": "上午八時至晚上八時", "答案D": "上午九時至晚上十時", "答案": "B"}, {"題號": 134, "題目": "公營銀行辦理應收債權催收作業委外處理時，應遵守____中有關勞務採購之規範？", "答案A": "銀行法", "答案B": "信託合作社法", "答案C": "金融機構作業委託他人處理內部作業制度及程序辦法", "答案D": "政府採購法", "答案": "D"}, {"題號": 135, "題目": "銀行辦理應收債權催收作業委外處理，應於借款契約簽訂或增訂時，訂定告知債務人之條 款；其未訂有告知債務人條款者，銀行應書面通知債務人上開委外事項，債務人如有意見應 於幾日內以書面通知銀行？", "答案A": "3 日", "答案B": "5 日", "答案C": "7 日", "答案D": "10 日", "答案": "C"}, {"題號": 136, "題目": "依據「金融機構出售不良債權應注意事項」，擬出售之不良債權標的如含銀行法第三十三條 及金融控股公司法第四十四條所稱之利害關係人授信案件，應經____以上董(理)事出席，及 出席董(理)事____以上之同意？", "答案A": "2/3；3/4", "答案B": "3/4 ；2/3", "答案C": "1/2 ；1/2", "答案D": "2/3 ；1/2", "答案": "A"}, {"題號": 137, "題目": "有關「逾期、催收及呆帳紀錄」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自清償之日起揭露 6 個月", "答案B": "自清償之日起揭露 1 年", "答案C": "自清償之日起揭露3 年", "答案D": "自清償之日起揭露 5 年", "答案": "C"}, {"題號": 138, "題目": "有關「呆帳紀錄」之聯徵中心不良紀錄揭露期間，最長不超過自轉銷之日起揭露多久？", "答案A": "1 年", "答案B": "3 年", "答案C": "5 年", "答案D": "10 年", "答案": "C"}, {"題號": 139, "題目": "有關「退票紀錄」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自退票日起揭露6 個月", "答案B": "自退票日起揭露 1 年", "答案C": "自退票日起揭露3 年", "答案D": "自退票日起揭露 5 年", "答案": "C"}, {"題號": 140, "題目": "有關「退票已清償並辦妥註記」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自辦妥清償註記之日起揭露 6 個月", "答案B": "自辦妥清償註記之日起揭露 1 年", "答案C": "自辦妥清償註記之日起揭露 3 年", "答案D": "自辦妥清償註記之日起揭露 5 年", "答案": "A"}, {"題號": 141, "題目": "有關「拒絕往來紀錄」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自通報日起揭露6 個月", "答案B": "自通報日起揭露 1 年", "答案C": "自通報日起揭露3 年", "答案D": "自通報日起揭露 5 年", "答案": "C"}, {"題號": 142, "題目": "有關「拒絕往來提前解除」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自拒絕往來提前解除之日起揭露 6 個月", "答案B": "自拒絕往來提前解除之日起揭露 1 年", "答案C": "自拒絕往來提前解除之日起揭露 3 年", "答案D": "自拒絕往來提前解除之日起揭露 5 年", "答案": "A"}, {"題號": 143, "題目": "有關「破產宣告紀錄」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自宣告日起揭露1 年", "答案B": "自宣告日起揭露 3 年", "答案C": "自宣告日起揭露5 年", "答案D": "自宣告日起揭露 10 年", "答案": "D"}, {"題號": 144, "題目": "有關「清算裁定註記」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自裁定開始清算日起揭露 1 年", "答案B": "自裁定開始清算日起揭露 3 年", "答案C": "自裁定開始清算日起揭露 5 年", "答案D": "自裁定開始清算日起揭露 10 年", "答案": "D"}, {"題號": 145, "題目": "有關「更生註記」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自更生方案履行完畢日起註記 6 個月，但最長不超逾法院認可更生方案之日起 5 年", "答案B": "自更生方案履行完畢日起註記 6 個月，但最長不超逾法院認可更生方案之日起 7 年", "答案C": "自更生方案履行完畢日起註記 4 年，但最長不超逾法院認可更生方案之日起 10 年", "答案D": "自更生方案履行完畢日起註記 5 年，但最長不超逾法院認可更生方案之日起 10 年", "答案": "C"}, {"題號": 146, "題目": "有關「信用卡資料」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自停卡發生日起揭露 6 個月", "答案B": "自停卡發生日起揭露 1 年", "答案C": "自停卡發生日起揭露5 年", "答案D": "自停卡發生日起揭露 7 年", "答案": "C"}, {"題號": 147, "題目": "有關「款項未繳之強制停卡資料未清償」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自停卡發生日起揭露 6 個月", "答案B": "自停卡發生日起揭露 1 年", "答案C": "自停卡發生日起揭露5 年", "答案D": "自停卡發生日起揭露 7 年", "答案": "D"}, {"題號": 148, "題目": "有關「款項未繳之強制停卡資料已清償」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自清償日起起揭露 5 年", "答案B": "自清償日起起揭露 7 年", "答案C": "自清償日起揭露6 個月，但最長不超過自停卡發生日起 5 年", "答案D": "自清償日起揭露6 個月，但最長不超過自停卡發生日起 7 年", "答案": "D"}, {"題號": 149, "題目": "有關「特約商店資料」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自解約發生日起揭露 6 個月", "答案B": "自解約發生日起揭露 1 年", "答案C": "自解約發生日起揭露5 年", "答案D": "自解約發生日起揭露 7 年", "答案": "C"}, {"題號": 150, "題目": "有關「特約商店每日請款交易資料」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自請款交易日起揭露 6 個月", "答案B": "自請款交易日起揭露 1 年", "答案C": "自請款交易日起揭露5 年", "答案D": "自請款交易日起揭露 7 年", "答案": "B"}, {"題號": 151, "題目": "有關「信用卡戶繳款資料」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自繳款截止日起揭露 6 個月", "答案B": "自繳款截止日起揭露 1 年", "答案C": "自繳款截止日起揭露5 年", "答案D": "自繳款截止日起揭露 7 年", "答案": "B"}, {"題號": 152, "題目": "有關「信用卡戶催收及呆帳紀錄」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自繳款截止日起揭露 6 個月", "答案B": "自繳款截止日起揭露1 年", "答案C": "自清償之日起揭露6 個月，但呆帳紀錄未清償者，自轉銷之日起揭露 5 年", "答案D": "自清償之日起揭露 6 個月，但呆帳紀錄未清償者，自轉銷之日起揭露 7 年", "答案": "C"}, {"題號": 153, "題目": "有關「會計師受懲戒處分資料」，除撤銷簽證之核准及除名者永久揭露外，其餘聯徵中心不良 紀錄揭露期間，應為下列何者？", "答案A": "自處分或懲戒日起揭露3 年", "答案B": "自處分或懲戒日起揭露5 年", "答案C": "自處分或懲戒日起揭露7 年", "答案D": "自處分或懲戒日起揭露10 年", "答案": "B"}, {"題號": 154, "題目": "有關「其他信用不良紀錄」之聯徵中心不良紀錄揭露期間，應為下列何者？", "答案A": "自事實發生日起揭露 1 年", "答案B": "自事實發生日起揭露 3 年", "答案C": "自事實發生日起揭露5 年", "答案D": "自事實發生日起揭露 7 年", "答案": "C"}, {"題號": 155, "題目": "依據「消費者債務清理條例」，消費者是指幾年內未從事營業活動或從事小規模營業活動之自然人？", "答案A": "1 年", "答案B": "3 年", "答案C": "5 年", "答案D": "10 年", "答案": "C"}, {"題號": 156, "題目": "依據「消費者債務清理條例」，小規模營業是指營業額平均每月新臺幣多少以下者？", "答案A": "1 萬", "答案B": "8 萬", "答案C": "20 萬", "答案D": "100 萬", "答案": "C"}, {"題號": 157, "題目": "下列何者非劣後債權？", "答案A": "法院裁定開始更生或清算程序前，因不履行金錢債務所生損害賠償、違約金及其他費用， 總額逾其本金週年比率百分之二部分", "答案B": "法院裁定開始更生或清算程序前所生之利息", "答案C": "法院裁定開始更生或清算程序後不履行債務所生之損害賠償及違約金", "答案D": "罰金、罰鍰、怠金、滯納金、滯報金、滯報費、怠報金及追徵金", "答案": "B"}, {"題號": 158, "題目": "債權人會議由下列何者指揮？", "答案A": "法院", "答案B": "債權人", "答案C": "債務人", "答案D": "監督人", "答案": "A"}, {"題號": 159, "題目": "債權人得以書面委任代理人出席債權人會議，但同一代理人所代理之人數逾申報債權人人數 多少者，其超過部分，法院得禁止之？", "答案A": "1/2", "答案B": "2/3", "答案C": "3/4", "答案D": "1/10", "答案": "D"}, {"題號": 160, "題目": "債權人會議不得議決下列何種事項？", "答案A": "清算財團之管理及其財產之處分方法", "答案B": "營業之停止或繼續", "答案C": "不易變價之財產返還債務人或拋棄", "答案D": "債務人財產變賣方式", "答案": "D"}, {"題號": 161, "題目": "自債務人提出協商請求之翌日起逾____日不開始協商，或自開始協商之翌日起逾____日協商 不成立，債務人得逕向法院聲請更生或清算？", "答案A": "30；60", "答案B": "30 ；90", "答案C": "60 ；30", "答案D": "90 ；30", "答案": "B"}, {"題號": 162, "題目": "債務人無擔保或無優先權之本金及利息債務總額未逾新臺幣多少元者，於法院裁定開始清算 程序或宣告破產前，得向法院聲請更生？", "答案A": "100 萬", "答案B": "1,000 萬", "答案C": "1,200 萬", "答案D": "1,500 萬", "答案": "C"}, {"題號": 163, "題目": "法院為不免責或撤銷免責之裁定確定後，債務人繼續清償債務，而各普通債權人受償額均達 其債權額之多少以上者，法院得依債務人之聲請裁定免責？", "答案A": "10%", "答案B": "20%", "答案C": "30%", "答案D": "50%", "答案": "B"}, {"題號": 164, "題目": "下列何者非個人資料保護法中的「個人資料」？", "答案A": "教育", "答案B": "星座", "答案C": "基因", "答案D": "性生活", "答案": "B"}, {"題號": 165, "題目": "「指以任何方式取得個人資料」為個人資料保護法下列何用詞之定義？", "答案A": "國際傳輸", "答案B": "利用", "答案C": "蒐集", "答案D": "處理", "答案": "C"}, {"題號": 166, "題目": "依個人資料保護法之定義，下列何者不屬於個人資料之處理？", "答案A": "為建立個人資料檔案所為資料之儲存", "答案B": "將所蒐集個人資料供子公司為交叉行銷", "答案C": "為利用個人資料檔案所為資料之編輯", "答案D": "為利用個人資料檔案所為資料之更正", "答案": "B"}, {"題號": 167, "題目": "公務或非公務機關應依當事人之請求，就其蒐集之個人資料，答覆查詢、提供閱覽或製給複 製本。上述請求，應於____日內，為准駁之決定；必要時，得予延長，延長之期間不得逾____ 日，並應將其原因以書面通知請求人？", "答案A": "15；15", "答案B": "15 ；30", "答案C": "30 ；15", "答案D": "30 ；30", "答案": "A"}, {"題號": 168, "題目": "公務機關或非公務機關應維護個人資料之正確，並應主動或依當事人之請求更正或補充之。 上述請求，應於____日內，為准駁之決定；必要時，得予延長，延長之期間不得逾____日， 並應將其原因以書面通知請求人？", "答案A": "15；15", "答案B": "15 ；30", "答案C": "30 ；15", "答案D": "30 ；30", "答案": "D"}, {"題號": 169, "題目": "公務機關或非公務機關受理當事人依個人資料保護法第十一條規定之請求，應於幾日內，為 准駁之決定？", "答案A": 5, "答案B": 10, "答案C": 15, "答案D": "30", "答案": "D"}, {"題號": 170, "題目": "依個人資料保護法規定，損害賠償請求權，自請求權人知有損害及賠償義務人時起，因幾年 間不行使；或自損害發生時起，逾幾年不行使而消滅？", "答案A": "1 年；3 年", "答案B": "2 年；3 年", "答案C": "2 年；5 年", "答案D": "3 年；5 年", "答案": "C"}, {"題號": 171, "題目": "依個人資料保護法規定，損害賠償除依該法規定外，非公務機關適用何法之規定？", "答案A": "民法", "答案B": "國家賠償法", "答案C": "消費者保護法", "答案D": "金融消費者保護法", "答案": "A"}, {"題號": 172, "題目": "公務機關違反規定，如被害人不易或不能證明其實際損害額時，得請求法院依侵害情節，以 每人每一事件新臺幣多少元計算？", "答案A": "五百元以上一萬元以下", "答案B": "五百元以上二萬元以下", "答案C": "一千元以上一萬元以下", "答案D": "一千元以上二萬元以下", "答案": "B"}, {"題號": 173, "題目": "公務機關違反個人資料保護法規定，對於同一原因事實造成多數當事人權利受侵害之事件， 經當事人請求損害賠償者，原則上其合計最高總額以新臺幣多少元為限？", "答案A": "500 元", "答案B": "5,000 元", "答案C": "2 萬元", "答案D": "2 億元", "答案": "D"}, {"題號": 174, "題目": "對於同一原因事實造成多數當事人權利受侵害之事件，財團法人或公益社團法人經受有損害 之當事人幾人以上以書面授與訴訟實施權者，得以自己之名義，提起損害賠償訴訟？", "答案A": "3 人", "答案B": "5 人", "答案C": "10 人", "答案D": "20 人", "答案": "D"}, {"題號": 175, "題目": "依據「個人資料保護法」，意圖為自己或第三人不法之利益或損害他人之利益，而違反第六 條第一項、第十五條、第十六條、第十九條、第二十條第一項規定，或中央目的事業主管機關依第二十一條限制國際傳輸之命令或處分，足生損害於他人者，處？", "答案A": "五年以下有期徒刑，得併科新臺幣一百萬元以下罰金", "答案B": "五年以下有期徒刑，得併科新臺幣一千萬元以下罰金", "答案C": "七年以下有期徒刑，得併科新臺幣一百萬元以下罰金", "答案D": "七年以下有期徒刑，得併科新臺幣一千萬元以下罰金", "答案": "A"}, {"題號": 176, "題目": "依據「個人資料保護法」意圖為自己或第三人不法之利益或損害他人之利益，而對於個人資 料檔案為非法變更、刪除或以其他非法方法，致妨害個人資料檔案之正確而足生損害於他人 者，處？", "答案A": "五年以下有期徒刑，得併科新臺幣一百萬元以下罰金", "答案B": "五年以下有期徒刑，得併科新臺幣一千萬元以下罰金", "答案C": "七年以下有期徒刑，得併科新臺幣一百萬元以下罰金", "答案D": "七年以下有期徒刑，得併科新臺幣一千萬元以下罰金", "答案": "A"}, {"題號": 177, "題目": "債權催收機關除可對債務人本人催收外，還可對下列何者催收？", "答案A": "配偶", "答案B": "子女", "答案C": "債權人", "答案D": "保證人", "答案": "D"}, {"題號": 178, "題目": "下列何者不是消費者保護法所稱「消費者」？", "答案A": "計程車之乘客", "答案B": "銀行消費借款之保證人", "答案C": "購票參加演唱會的歌迷", "答案D": "銀行消費借款之借款人", "答案": "B"}, {"題號": 179, "題目": "有關消費者保護法所用名詞定義，下列敘述何者錯誤？", "答案A": "消費爭議：指消費者與企業經營者間因商品或服務所生之爭議", "答案B": "企業經營者：指以設計、生產、製造、輸入、經銷商品或提供服務為營業者", "答案C": "訪問交易：指企業經營者未經邀約而在消費者之住居所或其他場所從事銷售，所為之買賣", "答案D": "定型化契約：指以契約當事人其中一方提出之定型化契約條款作為契約內容之全部或一 部而訂定之契約", "答案": "D"}, {"題號": 180, "題目": "有關消費者保護法規定，下列敘述何者錯誤？", "答案A": "定型化契約條款未經記載於定型化契約中而依正常情形顯非消費者所得預見者，該條款 不構成契約之內容", "答案B": "定型化契約中之定型化契約條款牴觸個別磋商條款之約定者，其牴觸部分無效", "答案C": "定型化契約條款係指企業經營者為與特定消費者訂立同類契約之用，所提出預先擬定之 契約條款", "答案D": "中央主管機關得選擇特定行業，公告規定其定型化契約應記載或不得記載之事項", "答案": "C"}, {"題號": 181, "題目": "依消費者保護法規定，有關訪問買賣之定義，下列敘述何者正確？", "答案A": "企業經營者經邀約，至消費者之住居所，展示所推銷東西", "答案B": "企業經營者未經邀約，至消費者住居所以外之其他場所，展示所推銷之東西", "答案C": "企業經營者經邀約，在消費者之住居所或其他場所從事銷售之行為", "答案D": "企業經營者未經邀約而在消費者住居所或其他場所從事銷售，所為之買賣", "答案": "D"}, {"題號": 182, "題目": "關於消費者保護法之主管機關，下列何者錯誤？", "答案A": "在中央為金管會", "答案B": "在中央為目的事業主管機關", "答案C": "在縣市為縣市政府", "答案D": "在直轄市為直轄市政府", "答案": "A"}, {"題號": 183, "題目": "依消費者保護法規定，定型化契約條款有疑義時，應如何處理？", "答案A": "有利消費者之解釋", "答案B": "有利企業經營者之解釋", "答案C": "廢止該條款", "答案D": "該條款視為無記載", "答案": "A"}, {"題號": 184, "題目": "依消費者保護法規定，企業經營者與消費者訂立定型化契約前，應有幾日以內之合理期間，供消費者審閱全部條款內容？", "答案A": "七日", "答案B": "十五日", "答案C": "三十日", "答案D": "四十五日", "答案": "C"}, {"題號": 185, "題目": "依消費者保護法規定，有關定型化契約之敘述，下列何者錯誤？", "答案A": "定型化契約中之條款違反誠信原則，對消費者顯失公平者，無效", "答案B": "定型化契約條款如有疑義者，應為有利於消費者之解釋", "答案C": "定型化契約中之定型化契約條款牴觸個別磋商條款之約定者，其牴觸部分仍為有效", "答案D": "中央主管機關得選擇特定行業，參酌定型化契約條款之重要性等事項，公告定型化契約 之審閱期間", "答案": "C"}, {"題號": 186, "題目": "金融機構定型化契約之定型化契約條款，如違反與主管機構公告之定型化契約應記載或不得 記載事項，依消費者保護法規定，其定型化契約條款效力為何？", "答案A": "無效", "答案B": "得撤銷", "答案C": "有效", "答案D": "效力未定", "答案": "A"}, {"題號": 187, "題目": "依消費者保護法規定，定型化契約條款牴觸個別磋商條款之約定者，其效力為何？", "答案A": "全部無效", "答案B": "牴觸部分無效", "答案C": "個別磋商無效", "答案D": "視情況而定", "答案": "B"}, {"題號": 188, "題目": "通訊交易或訪問交易之消費者，得於收受商品或接受服務後幾日內，以退回商品或書面通知 方式解除契約？", "答案A": "3 日", "答案B": "5 日", "答案C": "7 日", "答案D": "30 日", "答案": "C"}, {"題號": 189, "題目": "消費者保護團體以下列何者為限？", "答案A": "政府機關", "答案B": "有限公司", "答案C": "股份有限公司", "答案D": "社團法人或財團法人", "答案": "D"}, {"題號": 190, "題目": "消費爭議處理方式不包含？", "答案A": "申訴", "答案B": "訴願", "答案C": "調解", "答案D": "消費訴訟", "答案": "B"}, {"題號": 191, "題目": "企業經營者對於消費者之申訴，應於申訴之日起幾日內妥適處理之？", "答案A": "5 日", "答案B": "10 日", "答案C": "15 日", "答案D": "30 日", "答案": "C"}, {"題號": 192, "題目": "依據「消費者保護法」，因企業經營者之故意所致之損害，消費者得請求損害額幾倍以下之懲罰性賠償金？", "答案A": "1 倍", "答案B": "3 倍", "答案C": "5 倍", "答案D": "10 倍", "答案": "C"}, {"題號": 193, "題目": "依據「消費者保護法」，企業經營者因重大過失所致之損害，消費者得請求幾倍以下之懲罰性賠償金？", "答案A": "1 倍", "答案B": "3 倍", "答案C": "5 倍", "答案D": "10 倍", "答案": "B"}, {"題號": 194, "題目": "依據「消費者保護法」，企業經營者因過失所致之損害，消費者得請求損害額幾倍以下之懲罰性賠償金？", "答案A": "1 倍", "答案B": "3 倍", "答案C": "5 倍", "答案D": "10 倍", "答案": "A"}, {"題號": 195, "題目": "下列何者非消費者保護官職責？", "答案A": "處理消費爭議申訴事宜", "答案B": "處理消費爭議調解事宜", "答案C": "向法院訴請停止企業經營者營業之行為", "答案D": "向法院訴請停止企業經營者重大違反有關保護消費者規定之行為", "答案": "C"}, {"題號": 196, "題目": "依據「消費者保護法」，違反第二十四條(商品標示說明)、第二十五條(出具保證書)或第二十 六條(適當包裝)規定之一者，經主管機關通知改正而逾期不改正者，處新臺幣多少罰鍰？", "答案A": "一萬元以上十萬元以下", "答案B": "二萬元以上二十萬元以下", "答案C": "三萬元以上三十萬元以下", "答案D": "五萬元以上五十萬元以下", "答案": "B"}, {"題號": 197, "題目": "依據「消費者保護法」，企業經營者規避主管機關之調查者，最低處新臺幣多少罰鍰？", "答案A": "一萬元", "答案B": "二萬元", "答案C": "三萬元", "答案D": "三十萬元", "答案": "C"}, {"題號": 198, "題目": "依據「消費者保護法」，企業經營者規避主管機關之調查者，可處新臺幣多少罰鍰？", "答案A": "一萬元以上十萬元以下", "答案B": "二萬元以上二十萬元以下", "答案C": "三萬元以上三十萬元以下", "答案D": "五萬元以上五十萬元以下", "答案": "C"}, {"題號": 199, "題目": "企業經營者違反消費者保護法規定情節重大，經報經中央主管機關或消費者保護委員會核准 者，可爲下列何種處分？", "答案A": "僅得命其停止營業", "答案B": "僅得命其勒令歇業", "答案C": "得立即命令其停止營業", "答案D": "得命其停止營業或解散組織", "答案": "C"}, {"題號": 200, "題目": "金融消費者保護法之主管機構為下列何者？", "答案A": "消費者保護團體", "答案B": "金管會", "答案C": "財政部", "答案D": "中央銀行", "答案": "B"}, {"題號": 201, "題目": "依金融消費者保護法規定，金融消費者就金融消費爭議事件應先向下列何者提出申訴？", "答案A": "消費者保護團體", "答案B": "金管會", "答案C": "金融服務業", "答案D": "法院", "答案": "C"}, {"題號": 202, "題目": "金融服務業應於收受申訴之日起幾日內為適當之處理，並將處理結果回覆提出申訴之金融消", "答案A": "五日", "答案B": "三十日", "答案C": "六十日", "答案D": "九十日", "答案": "B"}, {"題號": 203, "題目": "金融消費者不接受金融服務業處理結果，得向下列何者申請評議？", "答案A": "消費者保護團體", "答案B": "金管會", "答案C": "爭議處理機構", "答案D": "法院", "答案": "C"}, {"題號": 204, "題目": "依金融消費者保護法規定，金融消費者不接受金融服務業處理結果，得於收受處理結果之日 起幾日內，向爭議處理機構申請評議？", "答案A": "五日", "答案B": "三十日", "答案C": "六十日", "答案D": "九十日", "答案": "C"}, {"題號": 205, "題目": "金融消費者得於評議成立之日起幾日之不變期間內，申請爭議處理機構將評議書送請法院核可？", "答案A": "五日", "答案B": "三十日", "答案C": "六十日", "答案D": "九十日", "答案": "D"}, {"題號": 206, "題目": "爭議處理機構應於受理金融消費者申請之日起幾日內，將評議書及卷證送請爭議處理機構事 務所所在地之管轄地方法院核可？", "答案A": "五日", "答案B": "三十日", "答案C": "六十日", "答案D": "九十日", "答案": "A"}, {"題號": 207, "題目": "爭議處理機構於受理申請評議後，應由評議委員會主任委員指派評議委員幾人以上為預審委 員先行審查？", "答案A": "3 人", "答案B": "5 人", "答案C": "7 人", "答案D": "10 人", "答案": "A"}, {"題號": 208, "題目": "預審委員應以全體預審委員多少以上之同意，作成審查意見報告，並提送評議委員會評議？", "答案A": "1/2", "答案B": "2/3", "答案C": "3/4", "答案D": "1/10", "答案": "B"}, {"題號": 209, "題目": "依金融消費者保護法規定，評議委員會應公平合理審酌評議事件之一切情狀，以全體評議委 員多少以上之出席，出席評議委員多少以上之同意，作成評議決定？", "答案A": "二分之一；二分之一", "答案B": "二分之一；三分之二", "答案C": "三分之二；二分之一", "答案D": "三分之二；四分之三", "答案": "A"}, {"題號": 210, "題目": "客訴兩大法寶為？", "答案A": "冷靜+情緒", "答案B": "冷靜+誠意", "答案C": "誠意+溝通", "答案D": "情緒+溝通", "答案": "B"}, {"題號": 211, "題目": "客訴解決問題關鍵為？", "答案A": "冷靜+情緒", "答案B": "冷靜+誠意", "答案C": "誠意+溝通", "答案D": "情緒+溝通", "答案": "D"}, {"題號": 212, "題目": "舒服區就是____領域，離理想有很長的一段距離，可以透過____來接近理想。", "答案A": "習慣；習慣", "答案B": "習慣；終身學習", "答案C": "學習；習慣", "答案D": "學習；終身學習", "答案": "B"}, {"題號": 213, "題目": "關於舒服區的敘述，下列何者錯誤？", "答案A": "是熟悉的人事物", "答案B": "管理上的大盲點", "答案C": "離理想距離很短", "答案D": "就是習慣領域", "答案": "C"}, {"題號": 214, "題目": "下列何者非 3C？", "答案A": "Customer", "答案B": "Competition", "答案C": "Change", "答案D": "Channel", "答案": "D"}, {"題號": 215, "題目": "關於微笑曲線，下列敘述何者正確？", "答案A": "左段為品牌、服務", "答案B": "左段為技術、專利", "答案C": "右段為組裝、製造", "答案D": "右段為技術、專利", "答案": "B"}, {"題號": 216, "題目": "關於微笑曲線，下列何者的附加價值最高？", "答案A": "技術", "答案B": "專利", "答案C": "服務", "答案D": "品牌", "答案": "C"}, {"題號": 217, "題目": "下列何者為內部顧客？", "答案A": "客戶", "答案B": "外賓", "答案C": "鄰居", "答案D": "工作夥伴", "答案": "D"}, {"題號": 218, "題目": "顧客需求 DHD 順序應為？", "答案A": "Demand、Hope、Dream", "答案B": "Dream、Hope、Demand", "答案C": "Discover、Hope、Dream", "答案D": "Dream、Hope、Discover", "答案": "A"}, {"題號": 219, "題目": "行銷界有一項經驗法則，爭取一個新客戶所要花費的成本，通常是留住一個老客戶的幾倍？", "答案A": "3 倍", "答案B": "5 倍", "答案C": "7 倍", "答案D": "10 倍", "答案": "B"}, {"題號": 220, "題目": "下列何者為顧客滿意的接點？ 甲.環境；乙.資訊；丙.產品；丁.人", "答案A": "僅甲乙丙", "答案B": "僅甲丙丁", "答案C": "僅乙丙丁", "答案D": "甲乙丙丁", "答案": "D"}, {"題號": 221, "題目": "顧客滿意(CS)接點最關鍵的因素為？", "答案A": "環境", "答案B": "資訊", "答案C": "產品", "答案D": "人", "答案": "D"}, {"題號": 222, "題目": "CS 的 4P 是指？", "答案A": "Product、Price、Place、Promotion", "答案B": "Product、People、Process、Place", "答案C": "Product、People、Process、Progress", "答案D": "Product、People、Price、Place", "答案": "C"}, {"題號": 223, "題目": "Employee satisfaction 是指？", "答案A": "滿意的顧客", "答案B": "滿意的員工", "答案C": "滿意的產品", "答案D": "滿意的工作", "答案": "B"}, {"題號": 224, "題目": "SWOT 中的S 是指？", "答案A": "威脅", "答案B": "機會", "答案C": "優勢", "答案D": "劣勢", "答案": "C"}, {"題號": 225, "題目": "SWOT 中的T 是指？", "答案A": "威脅", "答案B": "機會", "答案C": "優勢", "答案D": "劣勢", "答案": "A"}, {"題號": 226, "題目": "下列何者非 SWOT？", "答案A": "STRENGTH", "答案B": "WEAKNESS", "答案C": "OPPORTUNITY", "答案D": "THRONE", "答案": "D"}, {"題號": 227, "題目": "下列何者非 SWOT？", "答案A": "STRESS", "答案B": "WEAKNESS", "答案C": "OPPORTUNITY", "答案D": "THREAT", "答案": "A"}, {"題號": 228, "題目": "服務的本質為下列何者？", "答案A": "認識客戶", "答案B": "認識您自己", "答案C": "認識服務", "答案D": "冷靜+誠意", "答案": "B"}, {"題號": 229, "題目": "下列何者為顧客流失的主因？", "答案A": "員工服務不佳", "答案B": "員工不能完全減少顧客不滿", "答案C": "價格因素", "答案D": "顧客和競爭者公司關係密切", "答案": "A"}, {"題號": 230, "題目": "服務性質與特徵為下列何者？", "答案A": "不可觸知性、不可儲存性、生產與消費並存性、品質異質性", "答案B": "可靠度、反應度、保證、同理心、有形化", "答案C": "口碑、個人需要、過去經驗、對顧客之外再溝通", "答案D": "接納的態度、尊重的態度、體諒的態度", "答案": "A"}, {"題號": 231, "題目": "下列何者非服務的性質？", "答案A": "不可觸知", "答案B": "不易消失", "答案C": "不可分割", "答案D": "品質易變", "答案": "B"}, {"題號": 232, "題目": "對消費者而言，品質就是？", "答案A": "適用", "答案B": "流程改善", "答案C": "符合規格", "答案D": "縮小變異", "答案": "A"}, {"題號": 233, "題目": "對生產者而言，品質就是？", "答案A": "適用", "答案B": "流程改善", "答案C": "符合規格", "答案D": "縮小變異", "答案": "C"}, {"題號": 234, "題目": "戴明曾說，品質就是？", "答案A": "適用", "答案B": "流程改善", "答案C": "符合規格", "答案D": "縮小變異", "答案": "D"}, {"題號": 235, "題目": "確保品質的方法為下列何者？", "答案A": "檢驗", "答案B": "流程改善", "答案C": "符合規格", "答案D": "縮小變異", "答案": "B"}, {"題號": 236, "題目": "服務品質的決定因素為？", "答案A": "不可觸知性、不可儲存性、生產與消費並存性、品質異質性", "答案B": "可靠度、反應度、保證、同理心、有形化", "答案C": "口碑、個人需要、過去經驗、對顧客之外再溝通", "答案D": "接納的態度、尊重的態度、體諒的態度", "答案": "B"}, {"題號": 237, "題目": "顧客期望值高於實際感受值代表？", "答案A": "服務品質極好", "答案B": "服務品質好", "答案C": "服務品質普通", "答案D": "服務品質差", "答案": "D"}, {"題號": 238, "題目": "服務品質的關鍵為？", "答案A": "不可觸知性、不可儲存性、生產與消費並存性、品質異質性", "答案B": "可靠度、反應度、保證、同理心、有形化", "答案C": "口碑、個人需要、過去經驗、對顧客之外再溝通", "答案D": "接納的態度、尊重的態度、體諒的態度", "答案": "D"}, {"題號": 239, "題目": "影響消費者服務期望的方向為？", "答案A": "不可觸知性、不可儲存性、生產與消費並存性、品質異質性", "答案B": "可靠度、反應度、保證、同理心、有形化", "答案C": "口碑、個人需要、過去經驗、對顧客之外再溝通", "答案D": "接納的態度、尊重的態度、體諒的態度", "答案": "C"}, {"題號": 240, "題目": "服務品質缺口五大構面之「缺口一」為？", "答案A": "實際與期望", "答案B": "企業與消費者間", "答案C": "企業認知與服務設計", "答案D": "服務傳送與外界溝通", "答案": "B"}, {"題號": 241, "題目": "「服務設計與服務傳送」為服務品質缺口五大構面之第幾個缺口？", "答案A": "缺口二", "答案B": "缺口三", "答案C": "缺口四", "答案D": "缺口五", "答案": "B"}, {"題號": 242, "題目": "下列何者為銀行服務品質最重要的指標？", "答案A": "友善性", "答案B": "服務正確性", "答案C": "改正錯誤意願", "答案D": "禮貌", "答案": "C"}, {"題號": 243, "題目": "依據艾森豪原理，「客訴」屬於下列何者？", "答案A": "A 任務", "答案B": "B 任務", "答案C": "C 任務", "答案D": "P 任務", "答案": "A"}, {"題號": 244, "題目": "依據艾森豪原理，「P 任務」是指下列何者？", "答案A": "重要且緊急的任務", "答案B": "重要但不緊急的任務", "答案C": "不重要但緊急的任務", "答案D": "不重要且不緊急的任務", "答案": "D"}, {"題號": 245, "題目": "依據大石頭理論，關於金融服務業的優先順位，下列何者正確？", "答案A": "求穩→求好→求成長→求快", "答案B": "求穩→求好→求快→求成長", "答案C": "求好→求穩→求成長→求快", "答案D": "求好→求穩→求快→求成長", "答案": "B"}, {"題號": 246, "題目": "依據大石頭理論，金融服務業的「大石頭」應為下列何者？", "答案A": "求好", "答案B": "求快", "答案C": "求穩", "答案D": "求成長", "答案": "C"}, {"題號": 247, "題目": "「不良債權管理公司」的英文縮寫為？", "答案A": "PAC", "答案B": "DHD", "答案C": "AMC", "答案D": "AMD", "答案": "C"}, {"題號": 248, "題目": "處理客訴流程的第一步驟為？", "答案A": "傾聽", "答案B": "認識顧客", "答案C": "表示感謝", "答案D": "向顧客致歉", "答案": "C"}, {"題號": 249, "題目": "下列何者為處理客訴的五大要訣之一?", "答案A": "傾聽", "答案B": "認識顧客", "答案C": "表示感謝", "答案D": "層次高一點", "答案": "D"}, {"題號": 250, "題目": "下列何者非處理客訴五大要訣之一？", "答案A": "體諒多一點", "答案B": "態度好一點", "答案C": "動作快一點", "答案D": "補償多一點", "答案": "A"}, {"題號": 251, "題目": "下列何者為情緒的特性？ 甲.快速但不精確；乙.附著性；丙.累積性；丁.感染性", "答案A": "甲", "答案B": "甲乙丙", "答案C": "乙丙丁", "答案D": "甲乙丙丁", "答案": "D"}, {"題號": 252, "題目": "關於溝通下列何者正確？", "答案A": "當為說話者時，必須聽清楚、問清楚", "答案B": "當為說話者時，必須問清楚、記清楚", "答案C": "當為聽話者時，必須說明白、講清楚", "答案D": "當為聽話者時，必須聽清楚、問清楚、記清楚", "答案": "D"}, {"題號": 253, "題目": "關於傾聽的第一個原則，應為下列何者？", "答案A": "觀察對方肢體語言", "答案B": "積極地聽，注意聽講", "答案C": "還沒聽完對方話之前不搶答", "答案D": "注意眼神接觸，保持機靈，端正坐姿", "答案": "B"}, {"題號": 254, "題目": "關於 PAC 溝通分析，下列敘述何者正確？", "答案A": "P 是指People", "答案B": "A 是指 Adult", "答案C": "C 是指Customer", "答案D": "交叉型是最好的溝通方式", "答案": "B"}, {"題號": 255, "題目": "有關 IQ 的敘述，下列何者正確？", "答案A": "影響職場生產力的關鍵因素", "答案B": "讓公司有效運作的底線", "答案C": "是生活的選擇、發現與創造", "答案D": "專業知識或技能，是進入職場的基本門檻", "答案": "D"}, {"題號": 256, "題目": "下列敘述何者錯誤？", "答案A": "智屬於IQ", "答案B": "仁屬於 MQ", "答案C": "信屬於 EQ", "答案D": "勇屬於 EQ", "答案": "B"}, {"題號": 257, "題目": "有關 EQ 的敘述，下列何者正確？", "答案A": "影響職場生產力的關鍵因素", "答案B": "讓公司有效運作的底線", "答案C": "面對逆境的處理能力", "答案D": "專業知識或技能，是進入職場的基本門檻", "答案": "A"}, {"題號": 258, "題目": "關於培養 EQ 方式，下列何者錯誤？", "答案A": "負向思考", "答案B": "自我充實", "答案C": "自我激勵", "答案D": "自我獎勵", "答案": "A"}, {"題號": 259, "題目": "有關 AQ 的敘述，下列何者正確？", "答案A": "影響職場生產力的關鍵因素", "答案B": "讓公司有效運作的底線", "答案C": "面對逆境的處理能力", "答案D": "誰有 AQ，誰的存活率越高", "答案": "C"}, {"題號": 260, "題目": "有關 MQ 的敘述，下列何者正確？", "答案A": "影響職場生產力的關鍵因素", "答案B": "讓公司有效運作的底線", "答案C": "面對逆境的處理能力", "答案D": "專業知識或技能，是進入職場的基本門檻", "答案": "B"}, {"題號": 261, "題目": "讓公司有效運作的底線是指？", "答案A": "智力商數", "答案B": "情緒商數", "答案C": "道德商數", "答案D": "逆境商數", "答案": "C"}, {"題號": 262, "題目": "有關 BQ 的敘述，下列何者正確？", "答案A": "誰有創意，誰就卓越", "答案B": "是生活的選擇、發現與創造", "答案C": "身心合一微笑的功夫", "答案D": "面對逆境的處理能力", "答案": "B"}, {"題號": 263, "題目": "有關 CQ 的敘述，下列何者正確？", "答案A": "誰有創意，誰就卓越", "答案B": "是生活的選擇、發現與創造", "答案C": "身心合一微笑的功夫", "答案D": "面對逆境的處理能力", "答案": "A"}, {"題號": 264, "題目": "有關 RQ 的敘述，下列何者正確？", "答案A": "影響職場生產力的關鍵因素", "答案B": "讓公司有效運作的底線", "答案C": "面對逆境的處理能力", "答案D": "誰有 RQ，誰的存活率越高", "答案": "D"}, {"題號": 265, "題目": "有關 SQ 的敘述，下列何者正確？", "答案A": "誰有創意，誰就卓越", "答案B": "是生活的選擇、發現與創造", "答案C": "身心合一微笑的功夫", "答案D": "面對逆境的處理能力", "答案": "C"}];
+
+// ── STATE ──
+let markedIds = new Set(JSON.parse(localStorage.getItem('markedIds') || '[]'));
+let lastExamWrong = JSON.parse(localStorage.getItem('lastExamWrong') || '[]');
+
+// practice
+let practiceList = [];
+let practiceIdx = 0;
+let practiceAnswers = {};
+
+// exam
+let examList = [];
+let examIdx = 0;
+let examAnswers = {};
+let examMode = false;
+
+// ── UTILS ──
+function saveMarked() {
+  localStorage.setItem('markedIds', JSON.stringify([...markedIds]));
+  updateMarkedBadge();
+}
+function updateMarkedBadge() {
+  document.getElementById('marked-count-badge').textContent = markedIds.size;
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function goHome() {
+  showScreen('home');
+  updateMarkedBadge();
+}
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ── RENDER QUESTION ──
+function renderQuestion(q, container, answered, isExam) {
+  const letters = ['A','B','C','D'];
+  const opts = [q['答案A'], q['答案B'], q['答案C'], q['答案D']];
+  const correct = q['答案'];
+  const selected = answered;
+  const isMarked = markedIds.has(q['題號']);
+
+  let optHtml = opts.map((o, i) => {
+    const l = letters[i];
+    let cls = 'option';
+    let disabled = '';
+    if (selected) {
+      disabled = 'disabled';
+      if (l === correct) cls += ' correct';
+      else if (l === selected) cls += ' wrong';
+    }
+    return `<button class="${cls}" ${disabled} onclick="handleAnswer('${l}', ${isExam})">
+      <span class="opt-letter">${l}</span>
+      <span>${o || ''}</span>
+    </button>`;
+  }).join('');
+
+  let expHtml = '';
+  if (selected) {
+    if (selected === correct) {
+      expHtml = `<div class="explanation correct-exp">✓ 答對了！正確答案為 ${correct}。</div>`;
+    } else {
+      expHtml = `<div class="explanation wrong-exp">✗ 答錯了。您選擇 ${selected}，正確答案為 ${correct}。</div>`;
+    }
+  }
+
+  container.innerHTML = `
+    <div class="q-header">
+      <span class="q-num">第 ${q['題號']} 題</span>
+      ${!isExam ? `<button class="mark-btn ${isMarked ? 'marked' : ''}" onclick="toggleMark(${q['題號']})">
+        ${isMarked ? '⭐ 已標記' : '☆ 標記錯誤'}
+      </button>` : ''}
+    </div>
+    <div class="q-text">${q['題目']}</div>
+    <div class="options">${optHtml}</div>
+    ${expHtml}
+  `;
+}
+
+// ── MARK ──
+function toggleMark(id) {
+  if (markedIds.has(id)) {
+    markedIds.delete(id);
+    showToast('已取消標記');
+  } else {
+    markedIds.add(id);
+    showToast('⭐ 已標記此題');
+  }
+  saveMarked();
+  // re-render mark btn
+  const btn = document.querySelector('.mark-btn');
+  if (btn) {
+    btn.className = 'mark-btn' + (markedIds.has(id) ? ' marked' : '');
+    btn.textContent = markedIds.has(id) ? '⭐ 已標記' : '☆ 標記錯誤';
+  }
+}
+
+// ── PRACTICE ──
+function startPractice() {
+  practiceList = QUESTIONS;
+  practiceIdx = 0;
+  practiceAnswers = {};
+  document.getElementById('practice-title').textContent = '全部練習';
+  showScreen('practice');
+  renderPractice();
+}
+function startMarkedPractice() {
+  if (markedIds.size === 0) { showToast('尚無標記題目'); return; }
+  practiceList = QUESTIONS.filter(q => markedIds.has(q['題號']));
+  practiceIdx = 0;
+  practiceAnswers = {};
+  document.getElementById('practice-title').textContent = '標記題目練習';
+  showScreen('practice');
+  renderPractice();
+}
+function renderPractice() {
+  const q = practiceList[practiceIdx];
+  const container = document.getElementById('practice-area');
+  renderQuestion(q, container, practiceAnswers[q['題號']] || null, false);
+  document.getElementById('practice-info').textContent = `${practiceIdx+1} / ${practiceList.length}`;
+  const pct = ((practiceIdx+1)/practiceList.length*100).toFixed(1);
+  document.getElementById('practice-progress').style.width = pct + '%';
+  document.getElementById('prac-prev').disabled = practiceIdx === 0;
+  document.getElementById('prac-next').textContent = practiceIdx === practiceList.length-1 ? '完成 ✓' : '下一題 →';
+}
+function handleAnswer(letter, isExam) {
+  if (isExam) {
+    const q = examList[examIdx];
+    if (examAnswers[q['題號']]) return;
+    examAnswers[q['題號']] = letter;
+    renderExam();
+  } else {
+    const q = practiceList[practiceIdx];
+    if (practiceAnswers[q['題號']]) return;
+    practiceAnswers[q['題號']] = letter;
+    renderPractice();
+  }
+}
+function practiceNav(dir) {
+  if (dir === 1 && practiceIdx === practiceList.length - 1) {
+    showToast('已完成所有練習題！');
+    return;
+  }
+  practiceIdx = Math.max(0, Math.min(practiceList.length - 1, practiceIdx + dir));
+  renderPractice();
+  window.scrollTo(0,0);
+}
+
+// ── EXAM ──
+function startExam() {
+  examList = shuffle(QUESTIONS).slice(0, 80);
+  examIdx = 0;
+  examAnswers = {};
+  showScreen('exam');
+  renderExam();
+}
+function renderExam() {
+  const q = examList[examIdx];
+  const container = document.getElementById('exam-area');
+  const letters = ['A','B','C','D'];
+  const opts = [q['答案A'], q['答案B'], q['答案C'], q['答案D']];
+  const selected = examAnswers[q['題號']] || null;
+
+  // In exam mode: show selection only (no correct/wrong reveal)
+  let optHtml = opts.map((o, i) => {
+    const l = letters[i];
+    let cls = 'option';
+    if (selected === l) cls += ' selected';
+    return `<button class="${cls}" onclick="handleExamAnswer('${l}')">
+      <span class="opt-letter">${l}</span>
+      <span>${o || ''}</span>
+    </button>`;
+  }).join('');
+
+  const answered = Object.keys(examAnswers).length;
+  container.innerHTML = `
+    <div class="q-header">
+      <span class="q-num">第 ${examIdx + 1} 題 / 共 ${examList.length} 題</span>
+      <span style="font-size:.82rem;color:var(--text3);">已答 ${answered} 題</span>
+    </div>
+    <div class="q-text">${q['題目']}</div>
+    <div class="options">${optHtml}</div>
+  `;
+
+  document.getElementById('exam-info').textContent = `${examIdx+1} / ${examList.length}`;
+  document.getElementById('exam-progress').style.width = ((examIdx+1)/examList.length*100).toFixed(1) + '%';
+  document.getElementById('exam-prev').disabled = examIdx === 0;
+  document.getElementById('exam-next').disabled = examIdx === examList.length - 1;
+}
+function handleExamAnswer(letter) {
+  const q = examList[examIdx];
+  examAnswers[q['題號']] = letter;
+  renderExam();
+}
+function examNav(dir) {
+  examIdx = Math.max(0, Math.min(examList.length - 1, examIdx + dir));
+  renderExam();
+  window.scrollTo(0,0);
+}
+function submitExam() {
+  const answered = Object.keys(examAnswers).length;
+  const unanswered = examList.length - answered;
+  const msg = unanswered > 0
+    ? `尚有 ${unanswered} 題未作答，確定要結束作答並計分嗎？`
+    : `確定結束作答並計算成績嗎？`;
+  if (!confirm(msg)) return;
+
+  let correct = 0;
+  let wrongItems = [];
+  examList.forEach(q => {
+    const ans = examAnswers[q['題號']];
+    if (ans === q['答案']) {
+      correct++;
+    } else {
+      wrongItems.push({ q, selected: ans || null });
+    }
+  });
+  lastExamWrong = wrongItems.map(w => ({ id: w.q['題號'], selected: w.selected }));
+  localStorage.setItem('lastExamWrong', JSON.stringify(lastExamWrong));
+
+  const total = examList.length;
+  const score = (correct * 1.25).toFixed(2);
+  const pass = parseFloat(score) >= 70;
+
+  document.getElementById('result-score').textContent = score + ' 分';
+  document.getElementById('result-score').className = 'result-score ' + (pass ? 'pass' : 'fail');
+  document.getElementById('result-verdict').textContent = pass ? '🎉 恭喜通過！' : '❌ 未達及格標準';
+  document.getElementById('rs-total').textContent = total;
+  document.getElementById('rs-correct').textContent = correct;
+  document.getElementById('rs-wrong').textContent = total - correct;
+  showScreen('result');
+}
+function confirmExitExam() {
+  if (Object.keys(examAnswers).length > 0) {
+    if (!confirm('確定要離開考試？進度將不會儲存。')) return;
+  }
+  goHome();
+}
+function reviewExam() {
+  // Build review from examList + examAnswers
+  const content = document.getElementById('wrong-list-content');
+  document.getElementById('wrong-review-title').textContent = '本次答題詳情';
+  document.getElementById('wrong-review-back').onclick = () => showScreen('result');
+  const html = examList.map((q, i) => {
+    const sel = examAnswers[q['題號']] || '未作答';
+    const correct = q['答案'];
+    const isRight = sel === correct;
+    return `<div class="wrong-item">
+      <div class="wrong-item-q"><b>第 ${i+1} 題（原 ${q['題號']} 題）</b> ${q['題目']}</div>
+      <div class="wrong-item-meta">
+        <span>您的答案：<span class="${isRight ? 'ans' : 'your'}">${sel}</span></span>
+        <span>正確答案：<span class="ans">${correct}</span></span>
+        <span>${isRight ? '✓ 答對' : '✗ 答錯'}</span>
+      </div>
+    </div>`;
+  }).join('');
+  content.innerHTML = html || '<p style="color:var(--muted);padding:2rem;text-align:center">無資料</p>';
+  showScreen('wrong-review');
+}
+
+// ── WRONG LIST ──
+function showWrongList() {
+  const content = document.getElementById('wrong-list-content');
+  document.getElementById('wrong-review-title').textContent = '上次模擬考錯題';
+  document.getElementById('wrong-review-back').onclick = goHome;
+  if (lastExamWrong.length === 0) {
+    content.innerHTML = '<p style="color:var(--muted);padding:2rem;text-align:center">尚無錯誤記錄，請先進行模擬考試。</p>';
+  } else {
+    const qMap = {};
+    QUESTIONS.forEach(q => qMap[q['題號']] = q);
+    const html = lastExamWrong.map(w => {
+      const q = qMap[w.id];
+      if (!q) return '';
+      return `<div class="wrong-item">
+        <div class="wrong-item-q"><b>第 ${q['題號']} 題</b> ${q['題目']}</div>
+        <div class="wrong-item-meta">
+          <span>您的答案：<span class="your">${w.selected || '未作答'}</span></span>
+          <span>正確答案：<span class="ans">${q['答案']}</span></span>
+        </div>
+      </div>`;
+    }).join('');
+    content.innerHTML = html;
+  }
+  showScreen('wrong-review');
+}
+
+// ── THEME ──
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  if (isDark) document.documentElement.classList.remove('dark');
+  else document.documentElement.classList.add('dark');
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  updateThemeIcons();
+}
+function updateThemeIcons() {
+  const isDark = document.documentElement.classList.contains('dark');
+  document.querySelectorAll('.theme-toggle').forEach(btn => {
+    btn.textContent = isDark ? '☀️' : '🌙';
+    btn.title = isDark ? '切換淺色模式' : '切換深色模式';
+  });
+}
+
+// ── INIT ──
+if (localStorage.getItem('theme') === 'dark') {
+  document.documentElement.classList.add('dark');
+  document.documentElement.setAttribute('data-theme', 'dark');
+} else {
+  document.documentElement.setAttribute('data-theme', 'light');
+}
+updateThemeIcons();
+updateMarkedBadge();
+</script>
+</body>
+</html>
