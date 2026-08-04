@@ -55,6 +55,13 @@
     pointer-events:none;
   }
   .book__cover-row{display:flex; align-items:center; gap:14px; position:relative;}
+  .cover-home-btn{
+    position:absolute; top:14px; right:16px;
+    font-family:'IBM Plex Mono', monospace; font-size:.72rem;
+    background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.4); color:var(--paper);
+    border-radius:20px; padding:5px 12px; cursor:pointer;
+  }
+  .cover-home-btn:hover{background:rgba(255,255,255,.18);}
   .emblem{
     flex:0 0 auto;
     width:46px; height:46px; border-radius:50%;
@@ -193,7 +200,7 @@
   .option-row.incorrect{border-left-color:var(--stamp-red); background:rgba(166,51,42,.09);}
   .option-row.locked{cursor:default;}
   .option-row input{margin-top:3px; accent-color:var(--navy); width:15px; height:15px; flex:0 0 auto;}
-  .option-row .opt-text{font-size:.94rem; line-height:1.55;}
+  .option-row .opt-text{font-size:16px; line-height:1.55;}
   .option-mark{margin-left:auto; font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:.85rem; flex:0 0 auto;}
   .option-mark.g{color:var(--stamp-green);}
   .option-mark.r{color:var(--stamp-red);}
@@ -262,11 +269,12 @@
 <div class="frame">
   <div class="book">
     <div class="book__cover">
+      <button id="coverHomeBtn" type="button" class="cover-home-btn" style="display:none;" onclick="App.goHome()">返回首頁 ↩</button>
       <div class="book__cover-row">
         <div class="emblem">領</div>
         <div>
           <p class="book__title">領組甄試題庫練習</p>
-          <p class="book__subtitle" id="coverSubtitle">114年領組題庫 · 存摺式練習本</p>
+          <p class="book__subtitle" id="coverSubtitle">114年領組題庫</p>
         </div>
       </div>
     </div>
@@ -326,6 +334,7 @@
     }
   };
   var PROGRESS_KEY = 'lingzu-examprep-progress';
+  var SESSION_KEY = 'lingzu-examprep-session';
 
   /* ---------- state ---------- */
   var STATE = {
@@ -334,7 +343,8 @@
     setup: { mode:'practice', count:30, minutes:50, shuffleQ:true, shuffleO:true, subjectPanelOpen:false, types:{Single:true, Multi:true} },
     quiz: null,
     wrongBank: [],
-    cumulative: { answered:0, correct:0 }
+    cumulative: { answered:0, correct:0 },
+    textScale: 1
   };
   CLASS_ORDER.forEach(function(c){ STATE.selectedClasses[c]=true; });
 
@@ -361,6 +371,14 @@
     return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
   }
   function typeLabel(t){ return t==='Multi' ? '複選題' : '單選題'; }
+  var QUESTION_BASE_PX = 18;
+  var OPTION_BASE_PX = 16;
+  function adjustTextScale(delta){
+    var next = Math.round((STATE.textScale + delta)*100)/100;
+    next = Math.max(0.8, Math.min(1.6, next));
+    STATE.textScale = next;
+    render();
+  }
 
   function render(){
     var app = document.getElementById('app');
@@ -368,9 +386,13 @@
     else if(STATE.screen==='quiz') app.innerHTML = renderQuiz();
     else if(STATE.screen==='results') app.innerHTML = renderResults();
     document.getElementById('coverSubtitle').textContent =
-      STATE.screen==='setup' ? '114年領組題庫 · 存摺式練習本' :
+      STATE.screen==='setup' ? '114年領組題庫' :
       STATE.screen==='quiz' ? (STATE.quiz.mode==='exam' ? '模擬測驗進行中' : '練習模式進行中') :
       '作答結算單';
+    var isPractice = STATE.screen==='quiz' && STATE.quiz && STATE.quiz.mode==='practice';
+    var coverBtn = document.getElementById('coverHomeBtn');
+    if(coverBtn) coverBtn.style.display = isPractice ? 'inline-block' : 'none';
+    if(isPractice) saveSession();
   }
 
   /* ---------- init / persistence ---------- */
@@ -384,6 +406,20 @@
   }
   function saveProgress(){
     return Store.set(PROGRESS_KEY, { wrongBank: STATE.wrongBank, cumulative: STATE.cumulative });
+  }
+  function saveSession(){
+    if(!STATE.quiz || STATE.quiz.mode!=='practice') return;
+    Store.set(SESSION_KEY, {
+      questions: STATE.quiz.questions,
+      index: STATE.quiz.index,
+      selections: STATE.quiz.selections,
+      submitted: STATE.quiz.submitted,
+      recordedIds: STATE.quiz.recordedIds,
+      startedAt: STATE.quiz.startedAt
+    });
+  }
+  function clearSession(){
+    return Store.set(SESSION_KEY, null);
   }
 
   /* ================= SETUP SCREEN ================= */
@@ -399,14 +435,20 @@
     STATE.setup.subjectPanelOpen = !STATE.setup.subjectPanelOpen;
     render();
   }
+  var EXAM_MAX_COUNT = 100;
   function setMode(m){
     STATE.setup.mode = m;
-    if(m==='exam' && STATE.setup.count < 10) STATE.setup.count = 50;
+    if(m==='exam'){
+      if(STATE.setup.count < 10) STATE.setup.count = 50;
+      if(STATE.setup.count > EXAM_MAX_COUNT) STATE.setup.count = EXAM_MAX_COUNT;
+    }
     render();
   }
   function setPreset(n){
     var avail = selectedTotal();
-    STATE.setup.count = (n==='all') ? avail : Math.min(n, avail || n);
+    var val = (n==='all') ? avail : Math.min(n, avail || n);
+    if(STATE.setup.mode==='exam' && val>EXAM_MAX_COUNT) val = EXAM_MAX_COUNT;
+    STATE.setup.count = val;
     render();
   }
   function setCount(v){
@@ -414,6 +456,7 @@
     if(isNaN(n) || n<1) n=1;
     var avail = selectedTotal();
     if(avail>0 && n>avail) n=avail;
+    if(STATE.setup.mode==='exam' && n>EXAM_MAX_COUNT) n=EXAM_MAX_COUNT;
     STATE.setup.count = n;
   }
   function setMinutes(v){
@@ -433,10 +476,10 @@
     render();
   }
   function resetProgress(){
-    if(!confirm('確定要清除累計練習紀錄與錯題本嗎？此動作無法復原。')) return;
+    if(!confirm('確定要清除累計練習紀錄、錯題本與練習進度嗎？此動作無法復原。')) return;
     STATE.wrongBank = [];
     STATE.cumulative = { answered:0, correct:0 };
-    saveProgress().then(render);
+    Promise.all([saveProgress(), clearSession()]).then(render);
   }
 
   function renderSetup(){
@@ -453,12 +496,16 @@
       '</div>';
     }).join('');
 
+    var isExamSetup = STATE.setup.mode==='exam';
+    var maxAllowed = isExamSetup ? Math.min(avail, EXAM_MAX_COUNT) : avail;
+
     var presets = [20,50,100];
     var presetBtns = presets.map(function(n){
-      var active = STATE.setup.count===Math.min(n, avail||n) && STATE.setup.count!==avail;
+      var val = Math.min(n, avail||n);
+      var active = STATE.setup.count===val && STATE.setup.count!==maxAllowed;
       return '<button type="button" class="preset-btn'+(active?' active':'')+'" onclick="App.setPreset('+n+')">'+n+'題</button>';
     }).join('') +
-    '<button type="button" class="preset-btn'+(STATE.setup.count===avail && avail>0?' active':'')+'" onclick="App.setPreset(\'all\')">全部('+avail+')</button>';
+    '<button type="button" class="preset-btn'+(STATE.setup.count===maxAllowed && maxAllowed>0?' active':'')+'" onclick="App.setPreset(\'all\')">全部('+maxAllowed+')</button>';
 
     var examFields = STATE.setup.mode==='exam' ? (
       '<div class="param-row">' +
@@ -526,8 +573,9 @@
       '<div class="param-row">' +
         '<label style="font-size:.82rem;color:var(--ink-soft);">題數</label>' +
         presetBtns +
-        '<input class="num-input" type="number" min="1" max="'+avail+'" value="'+STATE.setup.count+'" oninput="App.setCount(this.value)">' +
+        '<input class="num-input" type="number" min="1" max="'+maxAllowed+'" value="'+STATE.setup.count+'" oninput="App.setCount(this.value)">' +
       '</div>' +
+      (isExamSetup ? '<div class="cumulative-line" style="margin-top:6px;">模擬測驗最多可設定 100 題</div>' : '') +
       examFields +
       '<div class="toggle-row"><input type="checkbox" id="shufQ" '+(STATE.setup.shuffleQ?'checked':'')+' onchange="App.toggleFlag(\'shuffleQ\')"><label for="shufQ">隨機出題順序</label></div>' +
       '<div class="toggle-row"><input type="checkbox" id="shufO" '+(STATE.setup.shuffleO?'checked':'')+' onchange="App.toggleFlag(\'shuffleO\')"><label for="shufO">隨機選項順序</label></div>' +
@@ -734,7 +782,8 @@
       autoSubmit: !!autoSubmit
     };
     STATE.screen = 'results';
-    saveProgress().then(render);
+    var wasPractice = STATE.quiz.mode==='practice';
+    Promise.all([saveProgress(), wasPractice ? clearSession() : Promise.resolve()]).then(render);
   }
 
   /* ---------- render quiz ---------- */
@@ -744,6 +793,8 @@
     var isExam = STATE.quiz.mode==='exam';
     var submitted = !isExam && !!STATE.quiz.submitted[q.id];
     var sel = STATE.quiz.selections[q.id] || [];
+    var qFontPx = Math.round(QUESTION_BASE_PX * STATE.textScale);
+    var optFontPx = Math.round(OPTION_BASE_PX * STATE.textScale);
 
     var optsHtml = q.shuffledOptions.map(function(o,i){
       var classes = ['option-row'];
@@ -759,7 +810,7 @@
       return '' +
       '<div class="'+classes.join(' ')+'" onclick="App.toggleOption('+i+')">' +
         '<input type="'+inputType+'" '+(chosen?'checked':'')+' '+(submitted?'disabled':'')+' onclick="event.stopPropagation(); App.toggleOption('+i+')">' +
-        '<span class="opt-text">'+esc(o.option)+'</span>' + mark +
+        '<span class="opt-text" style="font-size:'+optFontPx+'px;">'+esc(o.option)+'</span>' + mark +
       '</div>';
     }).join('');
 
@@ -772,7 +823,11 @@
     var pct = Math.round(100*(STATE.quiz.index)/total);
     var isFlagged = STATE.wrongBank.indexOf(q.id)>=0;
     var flagHtml = '<button type="button" class="flag-btn'+(isFlagged?' active':'')+'" onclick="App.toggleManualFlag()">'+(isFlagged?'★ 已加入錯題本':'☆ 加入錯題本')+'</button>';
-    var homeBtnHtml = !isExam ? '<button type="button" class="link-btn" onclick="App.goHome()">返回首頁 ↩</button>' : '';
+    var zoomHtml = '<span style="display:flex;align-items:center;gap:4px;">' +
+      '<button type="button" class="flag-btn" onclick="App.adjustTextScale(-0.1)" aria-label="縮小文字">A-</button>' +
+      '<span style="font-size:.72rem;color:var(--ink-soft);min-width:34px;text-align:center;">'+Math.round(STATE.textScale*100)+'%</span>' +
+      '<button type="button" class="flag-btn" onclick="App.adjustTextScale(0.1)" aria-label="放大文字">A+</button>' +
+    '</span>';
     var isLast = STATE.quiz.index === total-1;
 
     var actionHtml;
@@ -815,11 +870,11 @@
         '<span class="tag">'+esc(q.class)+'</span>' +
         '<span class="tag">'+typeLabel(q.type)+'</span>' +
       '</span>' +
-      '<span style="display:flex;align-items:center;gap:10px;">'+flagHtml+timerHtml+homeBtnHtml+'</span>' +
+      '<span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'+zoomHtml+flagHtml+timerHtml+'</span>' +
     '</div>' +
     '<div class="progress-track"><div class="progress-fill" style="width:'+pct+'%"></div></div>' +
     '<div class="question-card">' +
-      '<div class="question-text">NO.'+esc(q.sn)+'　'+esc(q.question)+'</div>' +
+      '<div class="question-text" style="font-size:'+qFontPx+'px;">NO.'+esc(q.sn)+'　'+esc(q.question)+'</div>' +
       multiHint +
       optsHtml +
       remarkHtml +
@@ -855,7 +910,8 @@
     var unansweredCount = graded.length - attempted.length;
     var completionRate = graded.length>0 ? Math.round(100*attempted.length/graded.length) : 0;
     var accuracyPct = attempted.length>0 ? Math.round(100*correctCount/attempted.length) : 0;
-    var tier = gradeTier(accuracyPct);
+    var score = graded.length>0 ? Math.round(100*correctCount/graded.length) : 0;
+    var tier = gradeTier(score);
 
     var byClass = computeCategoryBreakdown(graded);
     var catRows = Object.keys(byClass).map(function(c){
@@ -876,8 +932,8 @@
     return '' +
     '<div class="result-hero">' +
       autoNote +
-      '<div class="result-score '+tier.cls+'">正確率 '+accuracyPct+'%</div>' +
-      '<div class="result-sub">用時 '+elapsedStr+'</div>' +
+      '<div class="result-score '+tier.cls+'">'+score+' 分</div>' +
+      '<div class="result-sub">正確率 '+accuracyPct+'%　用時 '+elapsedStr+'</div>' +
       '<div class="stat-grid">' +
         '<div class="stat correct"><div class="stat-num">'+correctCount+'</div><div class="stat-label">答對</div></div>' +
         '<div class="stat wrong"><div class="stat-num">'+wrongCount+'</div><div class="stat-label">答錯</div></div>' +
@@ -890,7 +946,7 @@
       '<p class="section-label">科目結算</p>' +
       '<table class="cat-table"><thead><tr><th>科目</th><th>題數</th><th>答對</th><th>正確率</th></tr></thead><tbody>'+catRows+'</tbody></table>' +
     '</div>' +
-    '<div class="btn-row">' +
+    '<div class="btn-row" style="justify-content:center;">' +
       (reviewableCount>0 ? '<button type="button" class="btn btn-primary" onclick="App.retryWrongFromResults()">重新測驗錯題</button>' : '') +
       '<button type="button" class="btn btn-ghost" onclick="App.goHome()">返回首頁</button>' +
     '</div>';
@@ -919,6 +975,7 @@
     selectAllClasses: selectAllClasses,
     toggleSubjectPanel: toggleSubjectPanel,
     toggleManualFlag: toggleManualFlag,
+    adjustTextScale: adjustTextScale,
     setMode: setMode,
     setPreset: setPreset,
     setCount: setCount,
@@ -939,7 +996,24 @@
     goHome: goHome
   };
 
-  loadProgress().then(render);
+  Promise.all([loadProgress(), Store.get(SESSION_KEY)]).then(function(results){
+    var snap = results[1];
+    if(snap && snap.questions && snap.questions.length){
+      STATE.quiz = {
+        mode: 'practice',
+        questions: snap.questions,
+        index: Math.min(snap.index||0, snap.questions.length-1),
+        selections: snap.selections || {},
+        submitted: snap.submitted || {},
+        recordedIds: snap.recordedIds || {},
+        startedAt: snap.startedAt || Date.now(),
+        deadline: null,
+        timerHandle: null
+      };
+      STATE.screen = 'quiz';
+    }
+    render();
+  });
 })();
 </script>
 </body>
