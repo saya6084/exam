@@ -962,7 +962,7 @@ function renderCover(){
   if (STATE.screen==='import') subtitle = '匯入題庫檔案以開始練習';
   else if (STATE.screen==='setup') subtitle = ALL.length ? ('題庫共 '+ALL.length+' 題') : '尚未載入題庫';
   else if (STATE.screen==='quiz'){
-    subtitle = '練習模式';
+    subtitle = '';
     showHome = true;
   } else if (STATE.screen==='results') subtitle = '測驗結果';
   return '<div class="cover"><h1>考試題庫練習</h1><div class="sub">'+escapeHtml(subtitle)+'</div>'+
