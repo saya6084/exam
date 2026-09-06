@@ -206,25 +206,6 @@ input[type=file]{display:none;}
 .class-item .cnt{margin-left:auto;font-family:'IBM Plex Mono',monospace;color:var(--ink-soft);font-size:12px;}
 .select-links{font-size:12px;color:var(--navy);margin:6px 0 2px;}
 .select-links a{color:var(--navy);cursor:pointer;text-decoration:underline;margin-right:12px;}
-.toggle-row{display:flex;gap:10px;flex-wrap:wrap;}
-.toggle-btn{
-  flex:1;min-width:110px;text-align:center;
-  padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);
-  background:var(--surface);cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink-soft);
-}
-.toggle-btn.active{border-color:var(--navy);background:var(--navy);color:#fff;}
-.field-row{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
-.field-row label{font-size:13px;color:var(--ink-soft);min-width:70px;}
-.field-row input[type=number],.field-row input[type=text]{
-  border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:13.5px;width:90px;
-  font-family:'IBM Plex Mono',monospace;background:var(--surface);color:var(--ink);
-}
-.preset-btns{display:flex;gap:6px;flex-wrap:wrap;}
-.preset-btn{
-  padding:6px 12px;border-radius:16px;border:1px solid var(--line);background:var(--surface);
-  cursor:pointer;font-size:12.5px;color:var(--ink-soft);
-}
-.preset-btn.active{background:var(--brass);border-color:var(--brass);color:#fff;}
 .checkline{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:8px;color:var(--ink-soft);}
 .checkline input{accent-color:var(--navy);width:15px;height:15px;}
 .hint{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
@@ -266,13 +247,13 @@ input[type=file]{display:none;}
 .jump-class-btn:hover{border-color:var(--brass);}
 .jump-class-btn .cnt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);}
 .jump-input-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.jump-input-row .jump-cancel-btn{margin-left:auto;}
 .jump-input-row input[type=number]{
   width:80px;border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:14px;
   font-family:'IBM Plex Mono',monospace;background:var(--surface);color:var(--ink);text-align:center;
 }
 .jump-cancel-btn{font-size:12px;padding:5px 12px;}
-.jump-btn-row{display:flex;gap:8px;}
-.jump-btn-row .btn{flex:0 0 auto;}
+.jump-go-btn{font-size:12px;padding:5px 12px;}
 .related-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 16px;font-size:12.5px;}
 .related-label{color:var(--ink-soft);}
 .related-chip{
@@ -280,6 +261,7 @@ input[type=file]{display:none;}
   border-radius:12px;padding:3px 10px;font-size:12px;cursor:pointer;font-family:'IBM Plex Mono',monospace;
 }
 .related-chip:hover{background:var(--brass-light);}
+.related-chip.seen{background:var(--brass);color:#fff;border-color:var(--brass);}
 .related-chip.disabled{
   border-color:var(--line);color:var(--ink-soft);cursor:not-allowed;background:transparent;opacity:0.65;
 }
@@ -313,13 +295,6 @@ input[type=file]{display:none;}
 .multi-hint{font-size:12px;color:var(--brass);margin:-4px 0 10px;}
 .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px;}
 .nav-row .spacer{flex:1;}
-.exam-palette{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;margin-bottom:16px;}
-.pal-btn{
-  aspect-ratio:1;border-radius:6px;border:1px solid var(--line);background:var(--surface);font-size:12px;
-  font-family:'IBM Plex Mono',monospace;cursor:pointer;color:var(--ink-soft);
-}
-.pal-btn.answered{background:var(--navy);color:#fff;border-color:var(--navy);}
-.pal-btn.current{outline:2px solid var(--brass);outline-offset:1px;}
 
 /* results */
 .hero{text-align:center;padding:20px 0 10px;}
@@ -389,7 +364,7 @@ var BANK_KEY = 'examprep-bank-v1';
 var PROGRESS_KEY = 'examprep-progress-v1';
 var SESSION_KEY = 'examprep-session-v1';
 var DARKMODE_KEY = 'examprep-darkmode-v1';
-var EXAM_MAX_COUNT = 100;
+var SETUP_DONE_KEY = 'examprep-setup-done-v1';
 
 /* ---------- data holders ---------- */
 var ALL = [];
@@ -402,15 +377,12 @@ var STATE = {
   selectedClasses: {},
   setup: {
     types: { Single:true, Multi:true },
-    mode: 'practice', // practice | exam
-    preset: 'all',
-    count: 20, // only used in exam mode; practice mode always uses all filtered questions
-    timeLimit: 60,
     randomOrder: false,
     randomOptions: false
   },
   quiz: null,
   wrongBank: [],
+  seenBank: [],
   cumulative: { answered:0, correct:0 },
   textScale: 1,
   importMessage: '',
@@ -419,7 +391,9 @@ var STATE = {
   darkMode: false,
   explanationOpen: {},
   jumpPanelOpen: false,
-  jumpSelectedClass: null
+  jumpSelectedClass: null,
+  setupConfigured: false,
+  showFullSetup: false
 };
 
 /* ---------- indexing ---------- */
@@ -452,6 +426,7 @@ function rebuildIndexes(){
   });
   CLASS_ORDER.forEach(function(c){ if(!(c in STATE.selectedClasses)) STATE.selectedClasses[c]=true; });
   STATE.wrongBank = (STATE.wrongBank||[]).filter(function(id){ return id in BY_ID; });
+  STATE.seenBank = (STATE.seenBank||[]).filter(function(id){ return id in BY_ID; });
 }
 
 function relatedSnList(q){
@@ -635,10 +610,15 @@ function clearBank(){
   ALL = [];
   rebuildIndexes();
   STATE.wrongBank = [];
+  STATE.seenBank = [];
   STATE.cumulative = { answered:0, correct:0 };
+  STATE.quiz = null;
+  STATE.setupConfigured = false;
+  STATE.showFullSetup = false;
   Store.set(BANK_KEY, JSON.stringify(ALL), false);
-  Store.set(PROGRESS_KEY, JSON.stringify({wrongBank:[],cumulative:STATE.cumulative}), false);
+  Store.set(PROGRESS_KEY, JSON.stringify({wrongBank:[],seenBank:[],cumulative:STATE.cumulative}), false);
   Store.set(SESSION_KEY, '', false);
+  Store.set(SETUP_DONE_KEY, '', false);
   STATE.screen = 'import';
   STATE.importMessage = '';
   render();
@@ -646,7 +626,7 @@ function clearBank(){
 
 /* ---------- progress / session persistence ---------- */
 function saveProgress(){
-  Store.set(PROGRESS_KEY, JSON.stringify({ wrongBank: STATE.wrongBank, cumulative: STATE.cumulative }), false);
+  Store.set(PROGRESS_KEY, JSON.stringify({ wrongBank: STATE.wrongBank, seenBank: STATE.seenBank, cumulative: STATE.cumulative }), false);
 }
 function loadProgress(){
   return Store.get(PROGRESS_KEY, false).then(function(raw){
@@ -654,12 +634,13 @@ function loadProgress(){
     try {
       var p = JSON.parse(raw);
       STATE.wrongBank = (p.wrongBank||[]).filter(function(id){ return id in BY_ID; });
+      STATE.seenBank = (p.seenBank||[]).filter(function(id){ return id in BY_ID; });
       STATE.cumulative = p.cumulative || { answered:0, correct:0 };
     } catch(e){}
   });
 }
 function saveSession(){
-  if (STATE.screen==='quiz' && STATE.quiz && STATE.quiz.mode==='practice'){
+  if (STATE.screen==='quiz' && STATE.quiz){
     Store.set(SESSION_KEY, JSON.stringify(STATE.quiz), false);
   }
 }
@@ -709,36 +690,27 @@ function startQuiz(){
   var pool = ALL.filter(function(q){ return classes.indexOf(q.class)>=0 && types[q.type]; });
   if (pool.length===0) return;
   if (STATE.setup.randomOrder) pool = shuffle(pool);
-  var mode = STATE.setup.mode;
-  var count;
-  if (mode==='exam'){
-    count = Math.max(1, parseInt(STATE.setup.count,10)||1);
-    count = Math.min(count, EXAM_MAX_COUNT);
-  } else {
-    count = pool.length;
-  }
-  count = Math.min(count, pool.length);
-  var chosen = pool.slice(0, count).map(function(q){
+  var chosen = pool.map(function(q){
     var opts = q.options.map(function(o){ return {option:o.option, answer:o.answer}; });
     if (STATE.setup.randomOptions) opts = shuffle(opts);
     return { id:q.id, class:q.class, sn:q.sn, type:q.type, question:q.question, remark:q.remark, explanation:q.explanation, options:opts };
   });
   STATE.quiz = {
-    mode: mode,
     questions: chosen,
     index: 0,
     selections: {}, // id -> array of selected indices
     submitted: {}, // id -> true
     recordedIds: [],
-    startedAt: Date.now(),
-    timeLimitSec: mode==='exam' ? Math.max(1,parseInt(STATE.setup.timeLimit,10)||60)*60 : null
+    startedAt: Date.now()
   };
   STATE.screen = 'quiz';
   STATE.jumpPanelOpen = false;
   STATE.jumpSelectedClass = null;
+  STATE.setupConfigured = true;
+  STATE.showFullSetup = false;
+  Store.set(SETUP_DONE_KEY, 'true', false);
   saveSession();
   render();
-  if (mode==='exam') startExamTimer();
 }
 
 function startWrongReview(){
@@ -750,8 +722,8 @@ function startWrongReview(){
     return { id:q.id, class:q.class, sn:q.sn, type:q.type, question:q.question, remark:q.remark, explanation:q.explanation, options:shuffle(opts) };
   });
   STATE.quiz = {
-    mode:'practice', questions:qs, index:0, selections:{}, submitted:{}, recordedIds:[],
-    startedAt: Date.now(), timeLimitSec: null
+    questions:qs, index:0, selections:{}, submitted:{}, recordedIds:[],
+    startedAt: Date.now()
   };
   STATE.screen = 'quiz';
   STATE.jumpPanelOpen = false;
@@ -760,21 +732,6 @@ function startWrongReview(){
   render();
 }
 
-var examTimerHandle = null;
-function startExamTimer(){
-  if (examTimerHandle) clearInterval(examTimerHandle);
-  examTimerHandle = setInterval(function(){
-    if (STATE.screen!=='quiz' || !STATE.quiz || STATE.quiz.mode!=='exam') { clearInterval(examTimerHandle); return; }
-    var elapsed = Math.floor((Date.now()-STATE.quiz.startedAt)/1000);
-    if (elapsed >= STATE.quiz.timeLimitSec){
-      clearInterval(examTimerHandle);
-      finishQuiz();
-      return;
-    }
-    var barTimer = document.getElementById('quizTimer');
-    if (barTimer) barTimer.textContent = formatTime(STATE.quiz.timeLimitSec-elapsed);
-  }, 1000);
-}
 function formatTime(sec){
   sec = Math.max(0,sec);
   var m = Math.floor(sec/60), s = sec%60;
@@ -800,6 +757,7 @@ function gradeAndRecord(q){
   if (!isCorrect){
     if (wbIdx<0) STATE.wrongBank.push(q.id);
   }
+  if (STATE.seenBank.indexOf(q.id)<0) STATE.seenBank.push(q.id);
   saveProgress();
 }
 
@@ -898,26 +856,13 @@ function nextQuestion(){
 }
 function prevQuestion(){ goToIndex(STATE.quiz.index-1); }
 
-function allAnsweredCount(){
-  var quiz = STATE.quiz;
-  return quiz.questions.filter(function(q){ return quiz.submitted[q.id] || (quiz.selections[q.id]&&quiz.selections[q.id].length>0 && quiz.mode==='exam'); }).length;
-}
 function isLastAnsweredInPractice(){
   var quiz = STATE.quiz;
-  return quiz.mode==='practice' && quiz.index===quiz.questions.length-1 && quiz.submitted[quiz.questions[quiz.index].id];
+  return quiz.index===quiz.questions.length-1 && quiz.submitted[quiz.questions[quiz.index].id];
 }
 
 function finishQuiz(){
-  if (examTimerHandle) clearInterval(examTimerHandle);
   var quiz = STATE.quiz;
-  if (quiz.mode==='exam'){
-    quiz.questions.forEach(function(q){
-      if (!quiz.submitted[q.id]){
-        quiz.submitted[q.id] = true;
-        gradeAndRecord(q);
-      }
-    });
-  }
   var graded = quiz.questions.map(function(q){
     var sel = quiz.selections[q.id]||[];
     var correctIdx = [];
@@ -943,7 +888,8 @@ function finishQuiz(){
     newlyWrong: newlyWrong, byClass: byClass, elapsedSec: elapsedSec
   };
   STATE.screen = 'results';
-  if (quiz.mode==='practice') clearSession();
+  STATE.quiz = null;
+  clearSession();
   render();
 }
 
@@ -956,7 +902,7 @@ function retryWrongFromResults(){
     var opts = g.q.options.map(function(o){ return {option:o.option, answer:o.answer}; });
     return { id:g.q.id, class:g.q.class, sn:g.q.sn, type:g.q.type, question:g.q.question, remark:g.q.remark, explanation:g.q.explanation, options:shuffle(opts) };
   });
-  STATE.quiz = { mode:'practice', questions:shuffle(qs), index:0, selections:{}, submitted:{}, recordedIds:[], startedAt:Date.now(), timeLimitSec:null };
+  STATE.quiz = { questions:shuffle(qs), index:0, selections:{}, submitted:{}, recordedIds:[], startedAt:Date.now() };
   STATE.screen = 'quiz';
   STATE.jumpPanelOpen = false;
   STATE.jumpSelectedClass = null;
@@ -965,19 +911,16 @@ function retryWrongFromResults(){
 }
 
 function goHome(){
-  if (examTimerHandle) clearInterval(examTimerHandle);
-  STATE.quiz = null;
-  STATE.results = null;
   STATE.jumpPanelOpen = false;
   STATE.jumpSelectedClass = null;
-  clearSession();
   STATE.screen = 'setup';
   render();
 }
 
 function resetAllProgress(){
-  if (!confirm('確定要重置作答紀錄嗎？（錯題本與累計正確率將清空，題庫本身不受影響）')) return;
+  if (!confirm('確定要重置作答紀錄嗎？（錯題本、已練習紀錄與累計正確率將清空，題庫本身不受影響）')) return;
   STATE.wrongBank = [];
+  STATE.seenBank = [];
   STATE.cumulative = { answered:0, correct:0 };
   saveProgress();
   clearSession();
@@ -1019,8 +962,8 @@ function renderCover(){
   if (STATE.screen==='import') subtitle = '匯入題庫檔案以開始練習';
   else if (STATE.screen==='setup') subtitle = ALL.length ? ('題庫共 '+ALL.length+' 題') : '尚未載入題庫';
   else if (STATE.screen==='quiz'){
-    subtitle = STATE.quiz.mode==='exam' ? '模擬測驗中' : '練習模式';
-    showHome = STATE.quiz.mode==='practice';
+    subtitle = '練習模式';
+    showHome = true;
   } else if (STATE.screen==='results') subtitle = '測驗結果';
   return '<div class="cover"><h1>考試題庫練習</h1><div class="sub">'+escapeHtml(subtitle)+'</div>'+
     '<div class="cover-actions">'+
@@ -1060,6 +1003,12 @@ function renderSetupScreen(){
   h += '<div class="btn-row" style="margin-top:0;"><button class="btn secondary" data-act="go-import">匯入題庫檔案</button><button class="btn ghost" data-act="clear-bank">清除全部題庫</button></div>';
   h += '</div></div>';
 
+  // resume paused quiz callout
+  if (STATE.quiz && STATE.quiz.questions && STATE.quiz.questions.length){
+    var answeredSoFar = STATE.quiz.questions.filter(function(q){ return STATE.quiz.submitted[q.id]; }).length;
+    h += '<div class="wrongbank-callout"><div class="txt">尚有進行中的測驗（已作答 '+answeredSoFar+'／'+STATE.quiz.questions.length+' 題）</div><button class="btn brass" data-act="resume-quiz">繼續測驗</button></div>';
+  }
+
   // wrong bank callout
   var wbCount = STATE.wrongBank.filter(function(id){ return id in BY_ID; }).length;
   if (wbCount>0){
@@ -1069,6 +1018,32 @@ function renderSetupScreen(){
   // cumulative stats
   var acc = STATE.cumulative.answered>0 ? Math.round(STATE.cumulative.correct/STATE.cumulative.answered*100) : 0;
   h += '<div class="stat-line"><span>累計已作答 '+STATE.cumulative.answered+' 題　正確率 '+acc+'%</span><a data-act="reset-progress">重置紀錄</a></div>';
+
+  var total = selectedTotal();
+  var canStart = total>0 && (STATE.setup.types.Single || STATE.setup.types.Multi);
+
+  if (STATE.setupConfigured && !STATE.showFullSetup){
+    // condensed view: selections already made previously, skip the full form
+    var classesSel = selectedClassList();
+    var typesSel = [];
+    if (STATE.setup.types.Single) typesSel.push('單選');
+    if (STATE.setup.types.Multi) typesSel.push('複選');
+    var hasPausedQuiz = !!(STATE.quiz && STATE.quiz.questions && STATE.quiz.questions.length);
+    h += '<div class="card">';
+    h += '<div style="font-size:13px;color:var(--ink-soft);line-height:1.7;">';
+    h += '已選科目：'+escapeHtml(classesSel.join('、')||'無')+'<br>';
+    h += '題型：'+escapeHtml(typesSel.join('、')||'無')+'<br>';
+    h += '符合篩選條件共 '+total+' 題';
+    h += '</div>';
+    if (!hasPausedQuiz){
+      h += '<div class="start-btn-wrap"><button class="btn brass start-btn" data-act="start-quiz" '+(canStart?'':'disabled')+'>開始測驗</button></div>';
+    } else {
+      h += '<div class="hint" style="margin-top:10px;">尚有進行中的測驗，請先於上方「繼續測驗」或修改設定後再開始新測驗。</div>';
+    }
+    h += '<div class="select-links" style="margin-top:10px;margin-bottom:0;"><a data-act="show-full-setup">修改科目／題型設定</a></div>';
+    h += '</div>';
+    return h;
+  }
 
   // subject selection
   h += '<h2 class="section-title">選擇科目</h2>';
@@ -1094,33 +1069,14 @@ function renderSetupScreen(){
   h += '<div class="checkline"><input type="checkbox" id="randomOptionsChk" '+(STATE.setup.randomOptions?'checked':'')+'><span>隨機選項順序</span></div>';
   h += '</div>';
 
-  // mode
-  h += '<h2 class="section-title">作答模式</h2>';
-  h += '<div class="card"><div class="toggle-row">';
-  h += '<div class="toggle-btn'+(STATE.setup.mode==='practice'?' active':'')+'" data-act="set-mode" data-mode="practice">練習模式</div>';
-  h += '<div class="toggle-btn'+(STATE.setup.mode==='exam'?' active':'')+'" data-act="set-mode" data-mode="exam">模擬測驗</div>';
-  h += '</div>';
+  // question count hint (practice mode always uses all filtered questions)
+  h += '<div class="stat-line"><span>符合篩選條件共 '+total+' 題</span></div>';
 
-  // count (exam mode only; practice mode always uses all filtered questions)
-  var total = selectedTotal();
-  if (STATE.setup.mode==='exam'){
-    h += '<div class="field-row"><label>題數</label><div class="preset-btns">';
-    [20,50,100].forEach(function(p){
-      h += '<div class="preset-btn'+(STATE.setup.preset===p?' active':'')+'" data-act="set-preset" data-preset="'+p+'">'+p+'</div>';
-    });
-    h += '<div class="preset-btn'+(STATE.setup.preset==='all'?' active':'')+'" data-act="set-preset" data-preset="all">全部</div>';
-    h += '</div></div>';
-    h += '<div class="field-row"><label>自訂題數</label><input type="number" min="1" id="countInput" value="'+STATE.setup.count+'"></div>';
-    h += '<div class="hint">目前篩選共 '+total+' 題可用，模擬測驗最多可設定 '+EXAM_MAX_COUNT+' 題</div>';
-    h += '<div class="field-row"><label>限時（分）</label><input type="number" min="1" id="timeLimitInput" value="'+STATE.setup.timeLimit+'"></div>';
-  } else {
-    h += '<div class="hint">練習模式將依篩選條件作答全部 '+total+' 題</div>';
-  }
-
-  h += '</div>';
-
-  var canStart = total>0 && (STATE.setup.types.Single || STATE.setup.types.Multi);
   h += '<div class="start-btn-wrap"><button class="btn brass start-btn" data-act="start-quiz" '+(canStart?'':'disabled')+'>開始測驗</button></div>';
+
+  if (STATE.setupConfigured){
+    h += '<div class="select-links" style="margin-top:10px;"><a data-act="hide-full-setup">收合設定</a></div>';
+  }
 
   return h;
 }
@@ -1144,8 +1100,6 @@ function renderJumpPanel(quiz){
     h += '<div class="jump-input-row">';
     h += '<input type="number" min="1" max="'+subjTotal+'" id="jumpInput2" placeholder="題號">';
     h += '<span>／'+subjTotal+' 題</span>';
-    h += '</div>';
-    h += '<div class="jump-btn-row">';
     h += '<button class="btn secondary jump-cancel-btn" data-act="jump-back">取消</button>';
     h += '<button class="btn brass jump-go-btn" data-act="jump-confirm">確認</button>';
     h += '</div>';
@@ -1176,7 +1130,6 @@ function renderQuizScreen(){
   h += '<span style="font-size:11px;color:var(--ink-soft);">'+Math.round(STATE.textScale*100)+'%</span>';
   h += '<button class="zoom-btn" data-act="zoom" data-delta="0.1">A+</button>';
   h += '<button class="flag-btn" data-act="toggle-flag" title="加入錯題本">'+(isFlagged?'★':'☆')+'</button>';
-  if (quiz.mode==='exam') h += '<span class="timer" id="quizTimer">'+formatTime(quiz.timeLimitSec - Math.floor((Date.now()-quiz.startedAt)/1000))+'</span>';
   h += '</div></div>';
 
   h += '<div class="progress-bar-track"><div class="progress-bar-fill" style="width:'+Math.round(((idx+1)/total)*100)+'%;"></div></div>';
@@ -1186,20 +1139,6 @@ function renderQuizScreen(){
   }
 
   h += '<div class="question-text" style="font-size:'+(18*STATE.textScale)+'px;">'+subjSn+'. '+escapeHtml(q.question)+'</div>';
-
-  var related = relatedSnList(q);
-  if (related.length){
-    h += '<div class="related-row"><span class="related-label">相關題號：</span>';
-    related.forEach(function(sn){
-      var targetIdx = indexOfQuestionInQuiz(quiz, q.class, sn);
-      if (targetIdx>=0){
-        h += '<button class="related-chip" data-act="jump-related" data-i="'+targetIdx+'">'+escapeHtml(sn)+'</button>';
-      } else {
-        h += '<span class="related-chip disabled" title="不在本次測驗範圍內">'+escapeHtml(sn)+'</span>';
-      }
-    });
-    h += '</div>';
-  }
 
   if (q.type==='Multi' && !submitted) h += '<div class="multi-hint">本題為複選題，請選出所有正確選項</div>';
 
@@ -1223,6 +1162,25 @@ function renderQuizScreen(){
   if (submitted && q.remark){
     h += '<div class="remark-box">'+escapeHtml(q.remark)+'</div>';
   }
+
+  if (submitted){
+    var related = relatedSnList(q);
+    if (related.length){
+      h += '<div class="related-row"><span class="related-label">相關題號：</span>';
+      related.forEach(function(sn){
+        var targetIdx = indexOfQuestionInQuiz(quiz, q.class, sn);
+        var relId = q.class+'-'+sn;
+        var seenCls = STATE.seenBank.indexOf(relId)>=0 ? ' seen' : '';
+        if (targetIdx>=0){
+          h += '<button class="related-chip'+seenCls+'" data-act="jump-related" data-i="'+targetIdx+'">'+escapeHtml(sn)+'</button>';
+        } else {
+          h += '<span class="related-chip disabled" title="不在本次測驗範圍內">'+escapeHtml(sn)+'</span>';
+        }
+      });
+      h += '</div>';
+    }
+  }
+
   if (submitted && q.explanation){
     var expOpen = !!STATE.explanationOpen[q.id];
     h += '<div class="explanation-wrap">';
@@ -1236,25 +1194,13 @@ function renderQuizScreen(){
     h += '<div class="btn-row"><button class="btn brass" data-act="confirm-multi" '+(sel.length===0?'disabled':'')+'>確認送出</button></div>';
   }
 
-  if (quiz.mode==='exam'){
-    h += '<div class="exam-palette">';
-    quiz.questions.forEach(function(qq,i){
-      var pc = 'pal-btn'+(quiz.submitted[qq.id]?' answered':'')+(i===idx?' current':'');
-      h += '<button class="'+pc+'" data-act="goto" data-i="'+i+'">'+(i+1)+'</button>';
-    });
-    h += '</div>';
-    h += '<div class="nav-row"><button class="btn secondary" data-act="prev" '+(idx===0?'disabled':'')+'>← 上一題</button><div class="spacer"></div>';
-    h += '<button class="btn secondary" data-act="next" '+(idx===total-1?'disabled':'')+'>下一題 →</button></div>';
-    h += '<div class="btn-row" style="justify-content:center;"><button class="btn ghost" data-act="submit-exam">交卷</button></div>';
+  h += '<div class="nav-row"><button class="btn secondary" data-act="prev" '+(idx===0?'disabled':'')+'>← 上一題</button><div class="spacer"></div>';
+  if (isLastAnsweredInPractice()){
+    h += '<button class="btn brass" data-act="finish-practice">結束測驗，查看結果</button>';
   } else {
-    h += '<div class="nav-row"><button class="btn secondary" data-act="prev" '+(idx===0?'disabled':'')+'>← 上一題</button><div class="spacer"></div>';
-    if (isLastAnsweredInPractice()){
-      h += '<button class="btn brass" data-act="finish-practice">結束測驗，查看結果</button>';
-    } else {
-      h += '<button class="btn secondary" data-act="next" '+(idx===total-1?'disabled':'')+'>下一題 →</button>';
-    }
-    h += '</div>';
+    h += '<button class="btn secondary" data-act="next" '+(idx===total-1?'disabled':'')+'>下一題 →</button>';
   }
+  h += '</div>';
 
   return h;
 }
@@ -1332,16 +1278,6 @@ function bindEvents(){
     });
   });
 
-  var countInput = document.getElementById('countInput');
-  if (countInput) countInput.addEventListener('change', function(){
-    STATE.setup.count = Math.max(1, parseInt(countInput.value,10)||1);
-    STATE.setup.preset = null;
-    render();
-  });
-  var timeLimitInput = document.getElementById('timeLimitInput');
-  if (timeLimitInput) timeLimitInput.addEventListener('change', function(){
-    STATE.setup.timeLimit = Math.max(1, parseInt(timeLimitInput.value,10)||60);
-  });
   var randomOrderChk = document.getElementById('randomOrderChk');
   if (randomOrderChk) randomOrderChk.addEventListener('change', function(){ STATE.setup.randomOrder = randomOrderChk.checked; });
   var randomOptionsChk = document.getElementById('randomOptionsChk');
@@ -1352,6 +1288,9 @@ function handleAction(act, node){
   if (act==='go-import'){ STATE.screen='import'; STATE.importMessage=''; render(); }
   else if (act==='clear-bank'){ clearBank(); }
   else if (act==='review-wrong'){ startWrongReview(); }
+  else if (act==='resume-quiz'){ STATE.screen = 'quiz'; render(); }
+  else if (act==='show-full-setup'){ STATE.showFullSetup = true; render(); }
+  else if (act==='hide-full-setup'){ STATE.showFullSetup = false; render(); }
   else if (act==='reset-progress'){ resetAllProgress(); }
   else if (act==='select-all-classes'){ CLASS_ORDER.forEach(function(c){ STATE.selectedClasses[c]=true; }); render(); }
   else if (act==='select-none-classes'){ CLASS_ORDER.forEach(function(c){ STATE.selectedClasses[c]=false; }); render(); }
@@ -1361,22 +1300,6 @@ function handleAction(act, node){
     if (STATE.setup.types[t] && !STATE.setup.types[other]){ /* keep at least one selected: no-op */ }
     else STATE.setup.types[t] = !STATE.setup.types[t];
     if (!STATE.setup.types.Single && !STATE.setup.types.Multi) STATE.setup.types[t] = true;
-    render();
-  }
-  else if (act==='set-mode'){
-    STATE.setup.mode = node.getAttribute('data-mode');
-    if (STATE.setup.mode==='exam'){
-      if (STATE.setup.preset==='all' || !STATE.setup.count || STATE.setup.count>EXAM_MAX_COUNT){
-        STATE.setup.preset = 20;
-        STATE.setup.count = 20;
-      }
-    }
-    render();
-  }
-  else if (act==='set-preset'){
-    var p = node.getAttribute('data-preset');
-    if (p==='all'){ STATE.setup.preset='all'; STATE.setup.count = Math.min(selectedTotal()||1, STATE.setup.mode==='exam'?EXAM_MAX_COUNT:999999); }
-    else { STATE.setup.preset = parseInt(p,10); STATE.setup.count = STATE.setup.preset; }
     render();
   }
   else if (act==='start-quiz'){ startQuiz(); }
@@ -1399,9 +1322,6 @@ function handleAction(act, node){
   else if (act==='jump-back'){ backToJumpClassList(); }
   else if (act==='jump-confirm'){ confirmJumpTo(); }
   else if (act==='finish-practice'){ finishQuiz(); }
-  else if (act==='submit-exam'){
-    if (confirm('確定要交卷嗎？')) finishQuiz();
-  }
   else if (act==='retry-wrong'){ retryWrongFromResults(); }
   else if (act==='home'){ goHome(); }
 }
@@ -1421,13 +1341,16 @@ function init(){
     Store.get(BANK_KEY, false),
     loadProgressRaw(),
     Store.get(SESSION_KEY, false),
-    Store.get(DARKMODE_KEY, false)
+    Store.get(DARKMODE_KEY, false),
+    Store.get(SETUP_DONE_KEY, false)
   ]).then(function(results){
     var bankRaw = results[0];
     var progressRaw = results[1];
     var sessionRaw = results[2];
     var darkRaw = results[3];
+    var setupDoneRaw = results[4];
     STATE.darkMode = darkRaw === 'true';
+    STATE.setupConfigured = setupDoneRaw === 'true';
     document.body.classList.toggle('dark', STATE.darkMode);
     if (bankRaw){
       try { ALL = JSON.parse(bankRaw); } catch(e){ ALL = []; }
@@ -1445,6 +1368,7 @@ function init(){
       try {
         var p = JSON.parse(progressRaw);
         STATE.wrongBank = (p.wrongBank||[]).filter(function(id){ return id in BY_ID; });
+        STATE.seenBank = (p.seenBank||[]).filter(function(id){ return id in BY_ID; });
         STATE.cumulative = p.cumulative || { answered:0, correct:0 };
       } catch(e){}
     }
@@ -1463,7 +1387,6 @@ function init(){
       STATE.screen = ALL.length>0 ? 'setup' : 'import';
     }
     render();
-    if (resumed && STATE.quiz.mode==='exam') startExamTimer();
   });
 }
 function loadProgressRaw(){ return Store.get(PROGRESS_KEY, false); }
