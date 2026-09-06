@@ -266,7 +266,7 @@ input[type=file]{display:none;}
   border-color:var(--line);color:var(--ink-soft);cursor:not-allowed;background:transparent;opacity:0.65;
 }
 .progress-bar-fill{height:100%;background:var(--brass);transition:width .2s;}
-.question-text{font-size:18px;line-height:1.65;margin-bottom:16px;color:var(--ink);font-weight:600;}
+.question-text{font-size:18px;line-height:1.65;margin-bottom:16px;color:var(--ink);font-weight:600;white-space:pre-line;}
 .option-row{
   display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1.5px solid var(--line);
   border-radius:10px;margin-bottom:10px;cursor:pointer;background:var(--surface);font-size:16px;line-height:1.55;
@@ -281,7 +281,7 @@ input[type=file]{display:none;}
 .option-row input{margin-top:3px;accent-color:var(--navy);width:16px;height:16px;flex:0 0 auto;}
 .remark-box{
   background:var(--remark-bg);border:1px solid var(--brass);border-radius:8px;padding:10px 14px;
-  font-size:13px;color:var(--navy-deep);margin:6px 0 16px;
+  font-size:13px;color:var(--navy-deep);margin:6px 0 16px;white-space:pre-line;
 }
 .explanation-wrap{ margin:6px 0 16px; }
 .explanation-toggle{
@@ -1155,7 +1155,7 @@ function renderQuizScreen(){
     var inputType = q.type==='Multi' ? 'checkbox' : 'radio';
     h += '<div class="'+cls+'" data-act="pick-option" data-idx="'+i+'">';
     h += '<span class="mark">'+(submitted && o.answer ? '✔' : (submitted && isSel ? '✕' : mark))+'</span>';
-    h += '<span style="font-size:'+(16*STATE.textScale)+'px;">'+escapeHtml(o.option)+'</span>';
+    h += '<span style="font-size:'+(16*STATE.textScale)+'px;white-space:pre-line;">'+escapeHtml(o.option)+'</span>';
     h += '</div>';
   });
 
