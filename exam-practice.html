@@ -363,6 +363,7 @@ var Store = {
 var BANK_KEY = 'examprep-bank-v1';
 var PROGRESS_KEY = 'examprep-progress-v1';
 var SESSION_KEY = 'examprep-session-v1';
+var REVIEW_SESSION_KEY = 'examprep-review-session-v1';
 var DARKMODE_KEY = 'examprep-darkmode-v1';
 var SETUP_DONE_KEY = 'examprep-setup-done-v1';
 
@@ -381,6 +382,8 @@ var STATE = {
     randomOptions: false
   },
   quiz: null,
+  reviewQuiz: null,
+  quizKind: 'practice', // which slot the quiz screen is currently showing: 'practice' | 'review'
   wrongBank: [],
   seenBank: [],
   cumulative: { answered:0, correct:0 },
@@ -613,11 +616,13 @@ function clearBank(){
   STATE.seenBank = [];
   STATE.cumulative = { answered:0, correct:0 };
   STATE.quiz = null;
+  STATE.reviewQuiz = null;
   STATE.setupConfigured = false;
   STATE.showFullSetup = false;
   Store.set(BANK_KEY, JSON.stringify(ALL), false);
   Store.set(PROGRESS_KEY, JSON.stringify({wrongBank:[],seenBank:[],cumulative:STATE.cumulative}), false);
   Store.set(SESSION_KEY, '', false);
+  Store.set(REVIEW_SESSION_KEY, '', false);
   Store.set(SETUP_DONE_KEY, '', false);
   STATE.screen = 'import';
   STATE.importMessage = '';
@@ -640,22 +645,17 @@ function loadProgress(){
   });
 }
 function saveSession(){
-  if (STATE.screen==='quiz' && STATE.quiz){
-    Store.set(SESSION_KEY, JSON.stringify(STATE.quiz), false);
+  if (STATE.screen!=='quiz') return;
+  if (STATE.quizKind==='review'){
+    if (STATE.reviewQuiz) Store.set(REVIEW_SESSION_KEY, JSON.stringify(STATE.reviewQuiz), false);
+  } else {
+    if (STATE.quiz) Store.set(SESSION_KEY, JSON.stringify(STATE.quiz), false);
   }
 }
 function clearSession(){ Store.set(SESSION_KEY, '', false); }
-function loadSession(){
-  return Store.get(SESSION_KEY, false).then(function(raw){
-    if (!raw) return;
-    try {
-      var q = JSON.parse(raw);
-      if (q && q.questions && q.questions.length){
-        STATE.quiz = q;
-        STATE.screen = 'quiz';
-      }
-    } catch(e){}
-  });
+function clearReviewSession(){ Store.set(REVIEW_SESSION_KEY, '', false); }
+function activeQuiz(){
+  return STATE.quizKind==='review' ? STATE.reviewQuiz : STATE.quiz;
 }
 
 /* ---------- helpers ---------- */
@@ -703,6 +703,7 @@ function startQuiz(){
     recordedIds: [],
     startedAt: Date.now()
   };
+  STATE.quizKind = 'practice';
   STATE.screen = 'quiz';
   STATE.jumpPanelOpen = false;
   STATE.jumpSelectedClass = null;
@@ -721,10 +722,11 @@ function startWrongReview(){
     var opts = q.options.map(function(o){ return {option:o.option, answer:o.answer}; });
     return { id:q.id, class:q.class, sn:q.sn, type:q.type, question:q.question, remark:q.remark, explanation:q.explanation, options:shuffle(opts) };
   });
-  STATE.quiz = {
+  STATE.reviewQuiz = {
     questions:qs, index:0, selections:{}, submitted:{}, recordedIds:[],
     startedAt: Date.now()
   };
+  STATE.quizKind = 'review';
   STATE.screen = 'quiz';
   STATE.jumpPanelOpen = false;
   STATE.jumpSelectedClass = null;
@@ -739,12 +741,13 @@ function formatTime(sec){
 }
 
 function currentQuestion(){
-  if (!STATE.quiz) return null;
-  return STATE.quiz.questions[STATE.quiz.index];
+  var quiz = activeQuiz();
+  if (!quiz) return null;
+  return quiz.questions[quiz.index];
 }
 
 function gradeAndRecord(q){
-  var quiz = STATE.quiz;
+  var quiz = activeQuiz();
   if (quiz.recordedIds.indexOf(q.id)>=0) return;
   quiz.recordedIds.push(q.id);
   var sel = quiz.selections[q.id]||[];
@@ -764,7 +767,7 @@ function gradeAndRecord(q){
 function toggleOption(idx){
   var q = currentQuestion();
   if (!q) return;
-  var quiz = STATE.quiz;
+  var quiz = activeQuiz();
   if (quiz.submitted[q.id]) return;
   if (q.type==='Single'){
     quiz.selections[q.id] = [idx];
@@ -782,7 +785,7 @@ function toggleOption(idx){
 function confirmMultiAnswer(){
   var q = currentQuestion();
   if (!q) return;
-  var quiz = STATE.quiz;
+  var quiz = activeQuiz();
   if (!quiz.selections[q.id] || quiz.selections[q.id].length===0) return;
   quiz.submitted[q.id] = true;
   gradeAndRecord(q);
@@ -826,7 +829,7 @@ function backToJumpClassList(){
   render();
 }
 function confirmJumpTo(){
-  var quiz = STATE.quiz;
+  var quiz = activeQuiz();
   var cls = STATE.jumpSelectedClass;
   var input = document.getElementById('jumpInput2');
   if (!quiz || !cls || !input) return;
@@ -844,25 +847,25 @@ function confirmJumpTo(){
   }
 }
 function goToIndex(i){
-  var quiz = STATE.quiz;
+  var quiz = activeQuiz();
   if (!quiz || i<0 || i>=quiz.questions.length) return;
   quiz.index = i;
   saveSession();
   render();
 }
 function nextQuestion(){
-  var quiz = STATE.quiz;
+  var quiz = activeQuiz();
   if (quiz.index < quiz.questions.length-1){ goToIndex(quiz.index+1); }
 }
-function prevQuestion(){ goToIndex(STATE.quiz.index-1); }
+function prevQuestion(){ goToIndex(activeQuiz().index-1); }
 
 function isLastAnsweredInPractice(){
-  var quiz = STATE.quiz;
+  var quiz = activeQuiz();
   return quiz.index===quiz.questions.length-1 && quiz.submitted[quiz.questions[quiz.index].id];
 }
 
 function finishQuiz(){
-  var quiz = STATE.quiz;
+  var quiz = activeQuiz();
   var graded = quiz.questions.map(function(q){
     var sel = quiz.selections[q.id]||[];
     var correctIdx = [];
@@ -888,8 +891,13 @@ function finishQuiz(){
     newlyWrong: newlyWrong, byClass: byClass, elapsedSec: elapsedSec
   };
   STATE.screen = 'results';
-  STATE.quiz = null;
-  clearSession();
+  if (STATE.quizKind==='review'){
+    STATE.reviewQuiz = null;
+    clearReviewSession();
+  } else {
+    STATE.quiz = null;
+    clearSession();
+  }
   render();
 }
 
@@ -903,6 +911,7 @@ function retryWrongFromResults(){
     return { id:g.q.id, class:g.q.class, sn:g.q.sn, type:g.q.type, question:g.q.question, remark:g.q.remark, explanation:g.q.explanation, options:shuffle(opts) };
   });
   STATE.quiz = { questions:shuffle(qs), index:0, selections:{}, submitted:{}, recordedIds:[], startedAt:Date.now() };
+  STATE.quizKind = 'practice';
   STATE.screen = 'quiz';
   STATE.jumpPanelOpen = false;
   STATE.jumpSelectedClass = null;
@@ -1003,16 +1012,28 @@ function renderSetupScreen(){
   h += '<div class="btn-row" style="margin-top:0;"><button class="btn secondary" data-act="go-import">匯入題庫檔案</button><button class="btn ghost" data-act="clear-bank">清除全部題庫</button></div>';
   h += '</div></div>';
 
-  // resume paused quiz callout
-  if (STATE.quiz && STATE.quiz.questions && STATE.quiz.questions.length){
+  // resume paused practice quiz callout
+  var hasPausedQuiz = !!(STATE.quiz && STATE.quiz.questions && STATE.quiz.questions.length);
+  if (hasPausedQuiz){
     var answeredSoFar = STATE.quiz.questions.filter(function(q){ return STATE.quiz.submitted[q.id]; }).length;
     h += '<div class="wrongbank-callout"><div class="txt">尚有進行中的測驗（已作答 '+answeredSoFar+'／'+STATE.quiz.questions.length+' 題）</div><button class="btn brass" data-act="resume-quiz">繼續測驗</button></div>';
+  }
+
+  // resume paused wrong-review callout
+  var hasPausedReview = !!(STATE.reviewQuiz && STATE.reviewQuiz.questions && STATE.reviewQuiz.questions.length);
+  if (hasPausedReview){
+    var reviewAnsweredSoFar = STATE.reviewQuiz.questions.filter(function(q){ return STATE.reviewQuiz.submitted[q.id]; }).length;
+    h += '<div class="wrongbank-callout"><div class="txt">尚有進行中的錯題複習（已作答 '+reviewAnsweredSoFar+'／'+STATE.reviewQuiz.questions.length+' 題）</div><button class="btn brass" data-act="resume-review">繼續複習</button></div>';
   }
 
   // wrong bank callout
   var wbCount = STATE.wrongBank.filter(function(id){ return id in BY_ID; }).length;
   if (wbCount>0){
-    h += '<div class="wrongbank-callout"><div class="txt">錯題本中有 '+wbCount+' 題尚待複習</div><button class="btn brass" data-act="review-wrong">開始複習錯題</button></div>';
+    if (!hasPausedReview){
+      h += '<div class="wrongbank-callout"><div class="txt">錯題本中有 '+wbCount+' 題尚待複習</div><button class="btn brass" data-act="review-wrong">開始複習錯題</button></div>';
+    } else {
+      h += '<div class="wrongbank-callout"><div class="txt">錯題本中有 '+wbCount+' 題尚待複習，請先於上方「繼續複習」或完成後再開始新的複習</div></div>';
+    }
   }
 
   // cumulative stats
@@ -1028,7 +1049,6 @@ function renderSetupScreen(){
     var typesSel = [];
     if (STATE.setup.types.Single) typesSel.push('單選');
     if (STATE.setup.types.Multi) typesSel.push('複選');
-    var hasPausedQuiz = !!(STATE.quiz && STATE.quiz.questions && STATE.quiz.questions.length);
     h += '<div class="card">';
     h += '<div style="font-size:13px;color:var(--ink-soft);line-height:1.7;">';
     h += '已選科目：'+escapeHtml(classesSel.join('、')||'無')+'<br>';
@@ -1109,7 +1129,7 @@ function renderJumpPanel(quiz){
 }
 
 function renderQuizScreen(){
-  var quiz = STATE.quiz;
+  var quiz = activeQuiz();
   var q = currentQuestion();
   if (!q) return '<div class="empty-state">找不到題目</div>';
   var idx = quiz.index;
@@ -1288,7 +1308,8 @@ function handleAction(act, node){
   if (act==='go-import'){ STATE.screen='import'; STATE.importMessage=''; render(); }
   else if (act==='clear-bank'){ clearBank(); }
   else if (act==='review-wrong'){ startWrongReview(); }
-  else if (act==='resume-quiz'){ STATE.screen = 'quiz'; render(); }
+  else if (act==='resume-quiz'){ STATE.quizKind = 'practice'; STATE.screen = 'quiz'; render(); }
+  else if (act==='resume-review'){ STATE.quizKind = 'review'; STATE.screen = 'quiz'; render(); }
   else if (act==='show-full-setup'){ STATE.showFullSetup = true; render(); }
   else if (act==='hide-full-setup'){ STATE.showFullSetup = false; render(); }
   else if (act==='reset-progress'){ resetAllProgress(); }
@@ -1341,14 +1362,16 @@ function init(){
     Store.get(BANK_KEY, false),
     loadProgressRaw(),
     Store.get(SESSION_KEY, false),
+    Store.get(REVIEW_SESSION_KEY, false),
     Store.get(DARKMODE_KEY, false),
     Store.get(SETUP_DONE_KEY, false)
   ]).then(function(results){
     var bankRaw = results[0];
     var progressRaw = results[1];
     var sessionRaw = results[2];
-    var darkRaw = results[3];
-    var setupDoneRaw = results[4];
+    var reviewSessionRaw = results[3];
+    var darkRaw = results[4];
+    var setupDoneRaw = results[5];
     STATE.darkMode = darkRaw === 'true';
     STATE.setupConfigured = setupDoneRaw === 'true';
     document.body.classList.toggle('dark', STATE.darkMode);
@@ -1372,12 +1395,21 @@ function init(){
         STATE.cumulative = p.cumulative || { answered:0, correct:0 };
       } catch(e){}
     }
+    if (reviewSessionRaw){
+      try {
+        var rq = JSON.parse(reviewSessionRaw);
+        if (rq && rq.questions && rq.questions.length){
+          STATE.reviewQuiz = rq;
+        }
+      } catch(e){}
+    }
     var resumed = false;
     if (sessionRaw){
       try {
         var q = JSON.parse(sessionRaw);
         if (q && q.questions && q.questions.length){
           STATE.quiz = q;
+          STATE.quizKind = 'practice';
           STATE.screen = 'quiz';
           resumed = true;
         }
