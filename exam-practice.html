@@ -725,9 +725,7 @@ function gradeAndRecord(q){
     if (isCorrect) STATE.cumulative.correct++;
   }
   var wbIdx = STATE.wrongBank.indexOf(q.id);
-  if (isCorrect){
-    if (wbIdx>=0) STATE.wrongBank.splice(wbIdx,1);
-  } else if (wbIdx<0){
+  if (!isCorrect && wbIdx<0){
     STATE.wrongBank.push(q.id);
   }
   if (STATE.seenBank.indexOf(q.id)<0) STATE.seenBank.push(q.id);
