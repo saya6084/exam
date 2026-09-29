@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>業務資料查詢</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --paper:#f8fafc;
+    --paper-deep:#eef2f7;
+    --card:#ffffff;
+    --ink:#1e293b;
+    --ink-soft:#475569;
+    --ink-faint:#94a3b8;
+    --rule:#e2e8f0;
+    --rule-strong:#cbd5e1;
+    --seal:#e11d48;
+    --seal-deep:#be123c;
+    --seal-tint:#ffe4e6;
+    --brass:#d97706;
+    --brass-tint:#fef3c7;
+    --primary:#2563eb;
+    --primary-deep:#1d4ed8;
+    --primary-tint:#dbeafe;
+    --focus:#2563eb;
+    --shadow: 0 1px 2px rgba(15,23,42,0.06);
+    --serif: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    --content-scale: 1;
+  }
+  :root[data-theme="dark"]{
+    --paper:#0f172a;
+    --paper-deep:#1a2436;
+    --card:#182234;
+    --ink:#eef2f9;
+    --ink-soft:#c2cbdb;
+    --ink-faint:#7c8aa3;
+    --rule:#2b374d;
+    --rule-strong:#3c495f;
+    --seal:#fb7185;
+    --seal-deep:#fda4af;
+    --seal-tint:#3b1a22;
+    --brass:#fbbf24;
+    --brass-tint:#3d2f0d;
+    --primary:#5b9bff;
+    --primary-deep:#8ab8ff;
+    --primary-tint:#152944;
+    --focus:#5b9bff;
+    --shadow: 0 1px 2px rgba(0,0,0,0.5);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    transition:background .15s ease, color .15s ease;
+  }
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  /* ============ Top bar ============ */
+  .topbar{
+    position:sticky; top:0; z-index:20;
+    background:var(--paper);
+    border-bottom:1px solid var(--rule-strong);
+    padding:10px 0;
+  }
+  .topbar-row{
+    display:flex; align-items:center; gap:12px; max-width:1180px; margin:0 auto; padding:0 14px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:9px; flex-shrink:0;
+  }
+  .brand-mark{
+    font-family:var(--serif); font-weight:700; font-size:16.5px; letter-spacing:.01em; color:var(--ink);
+    white-space:nowrap;
+  }
+  .search-wrap{
+    flex:1; position:relative; min-width:0;
+  }
+  .search-input{
+    width:100%; min-width:0; padding:9px 130px 9px 34px;
+    border:1px solid var(--rule-strong); border-radius:3px;
+    background:var(--card); color:var(--ink);
+    font-family:var(--sans); font-size:15px;
+    outline:none;
+  }
+  .search-input:focus{ border-color:var(--focus); box-shadow:0 0 0 2px rgba(43,95,90,0.15); }
+  .search-icon{
+    position:absolute; left:11px; top:50%; transform:translateY(-50%);
+    width:14px; height:14px; color:var(--ink-faint); pointer-events:none;
+  }
+  .search-clear{
+    position:absolute; right:78px; top:50%; transform:translateY(-50%);
+    border:none; background:transparent; color:var(--ink-faint); cursor:pointer;
+    font-size:16px; line-height:1; padding:4px; display:none;
+  }
+  .search-nav-compact{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    display:flex; gap:6px;
+  }
+  .search-nav-btn{
+    width:26px; height:26px; border-radius:50%; border:none; padding:0;
+    background:var(--paper-deep); color:var(--ink-soft);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .search-nav-btn:hover{ background:var(--rule-strong); }
+  .search-nav-btn svg{ width:13px; height:13px; }
+  .settings-wrap{ position:relative; flex-shrink:0; }
+  .settings-btn{
+    display:flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border:1px solid var(--rule-strong); border-radius:3px;
+    background:var(--card); color:var(--ink); cursor:pointer;
+  }
+  .settings-btn.open{ background:var(--primary); color:#fff; border-color:var(--primary); }
+  .settings-btn svg{ width:17px; height:17px; }
+  .hamburger-btn{
+    display:flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border:1px solid var(--rule-strong); border-radius:3px;
+    background:var(--card); color:var(--ink); cursor:pointer; flex-shrink:0;
+  }
+  .hamburger-btn svg{ width:18px; height:18px; }
+  .nav-scrim{
+    display:none; position:fixed; inset:58px 0 0 0; background:rgba(15,23,42,0.35); z-index:29;
+  }
+  .nav-scrim.show{ display:block; }
+  .settings-panel{
+    position:absolute; right:0; top:calc(100% + 8px); z-index:30;
+    width:280px; background:var(--card); border:1px solid var(--rule-strong);
+    border-radius:4px; box-shadow:0 4px 14px rgba(29,36,32,0.15);
+    padding:14px; display:none;
+  }
+  .settings-panel.open{ display:block; }
+  .settings-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .settings-row + .settings-row{ margin-top:14px; padding-top:14px; border-top:1px solid var(--rule); }
+  .settings-label{ font-size:13px; color:var(--ink); font-weight:500; }
+  .settings-sub{ font-size:11px; color:var(--ink-faint); margin-top:2px; overflow-wrap:break-word; word-break:break-word; }
+  .scale-ctrl{
+    display:flex; align-items:center; gap:2px; flex-shrink:0;
+    border:1px solid var(--rule-strong); border-radius:3px; overflow:hidden; background:var(--paper);
+  }
+  .scale-ctrl button{
+    border:none; background:transparent; color:var(--ink); cursor:pointer;
+    width:28px; height:30px; font-family:var(--serif); font-weight:700; line-height:1;
+  }
+  .scale-ctrl button:first-child{ font-size:12px; border-right:1px solid var(--rule); }
+  .scale-ctrl button:last-child{ font-size:15px; border-left:1px solid var(--rule); }
+  .scale-ctrl button:disabled{ opacity:.35; cursor:default; }
+  .scale-label{
+    font-size:11px; color:var(--ink-faint); width:34px; text-align:center; user-select:none;
+  }
+  .switch{
+    position:relative; width:38px; height:22px; border-radius:999px; flex-shrink:0;
+    background:var(--rule-strong); border:none; cursor:pointer; padding:0;
+  }
+  .switch.on{ background:var(--primary); }
+  .switch::after{
+    content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
+    background:#fff; transition:left .15s ease;
+  }
+  .switch.on::after{ left:18px; }
+  .import-row{ padding-top:14px; margin-top:14px; border-top:1px solid var(--rule); display:block; }
+  .import-actions{ margin-top:8px !important; padding-top:0 !important; border-top:none !important; display:flex; gap:8px; }
+  .btn.small{ padding:6px 12px; font-size:12.5px; }
+  .btn.ghost{ background:transparent; color:var(--seal); border-color:var(--seal); }
+  label.btn{ display:inline-flex; align-items:center; justify-content:center; }
+  /* ============ Import landing (framework empty state) ============ */
+  .import-landing{
+    display:none; min-height:100vh;
+    align-items:center; justify-content:center; padding:40px 16px; width:100%;
+  }
+  .import-landing.show{ display:flex; }
+  .import-landing-card{
+    max-width:480px; text-align:center; background:var(--card);
+    border:1px solid var(--rule); border-radius:16px; padding:25px 50px;
+    box-shadow:var(--shadow);
+  }
+  .import-landing-glyph{
+    font-size:34px; font-weight:900; color:var(--primary); margin-bottom:6px;
+  }
+  .import-landing-title{
+    font-family:var(--serif); font-weight:900; font-size:22px; color:var(--ink); margin:0 0 14px;
+  }
+  .import-landing-desc{
+    font-size:13.5px; line-height:1.7; color:var(--ink-soft); margin:0 0 14px;
+  }
+  .btn.large{ padding:12px 22px; font-size:15px; border-radius:10px; margin-top:6px; }
+  .import-landing-status{
+    margin-top:16px; font-size:12.5px; color:var(--ink-faint); min-height:18px;
+  }
+
+  /* ============ Layout ============ */
+  .shell{
+    max-width:1180px; margin:0 auto;
+    display:flex; flex-direction:column;
+  }
+
+  /* ============ Category tree navigation ============ */
+  .cats-scroll{
+    display:flex; flex-direction:column; gap:10px; padding:12px 10px 14px;
+  }
+  .tree-item{
+    display:flex; align-items:center; gap:8px; width:100%;
+    border:none; background:transparent; color:var(--ink-soft);
+    font-size:16px; padding:11px 12px; border-radius:12px;
+    cursor:pointer; text-align:left; line-height:1.35;
+  }
+  .tree-item.top-item{ background:var(--card); border:1px solid var(--rule); box-shadow:var(--shadow); }
+  .tree-item:hover{ background:var(--paper-deep); }
+  .tree-item.top-item:hover{ background:var(--paper-deep); }
+  .tree-item.active{
+    background:var(--primary); color:#fff; font-weight:700;
+  }
+  .tree-item.review{ color:var(--seal-deep); font-weight:700; }
+  .tree-item.review.active{ background:var(--seal); color:#fff; }
+  .tree-count{
+    margin-left:auto; font-size:11.5px; color:var(--ink-faint); flex-shrink:0;
+    background:var(--paper-deep); padding:3px 10px; border-radius:999px; font-weight:500;
+  }
+  .tree-item.active .tree-count{ background:rgba(255,255,255,0.22); color:#fff; }
+  .tree-item.top-item.active:hover{ background:var(--primary); }
+  .tree-item.top-item.review.active:hover{ background:var(--seal); }
+  .tree-caret{
+    display:inline-flex; width:14px; flex-shrink:0; justify-content:center;
+    font-size:10px; color:var(--ink-faint); transition:transform .12s ease;
+  }
+  .cat-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .tree-group{
+    background:var(--card); border:1px solid var(--rule); border-radius:14px;
+    padding:6px; box-shadow:var(--shadow);
+  }
+  .tree-group .tree-item.group-item{
+    font-weight:700; color:var(--ink); padding:9px 8px;
+  }
+  .tree-group .tree-item.group-item.active{ color:#fff; }
+  .tree-group .tree-item.group-item.active:hover{ background:var(--primary); }
+  .tree-children{
+    display:flex; flex-direction:column; gap:1px;
+    margin-top:2px; padding:0;
+  }
+  .tree-children .tree-item{ padding:11px 12px; font-weight:400; }
+  main{ padding:16px 14px 60px; }
+
+  .meta-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    margin-bottom:14px; flex-wrap:wrap;
+  }
+  .meta-title{
+    font-family:var(--serif); font-weight:700; font-size:20px; color:var(--ink);
+  }
+  .meta-count{ font-size:12.5px; color:var(--ink-faint); }
+
+  /* ============ Cards ============ */
+  .card{
+    background:var(--card);
+    border:1px solid var(--rule);
+    border-left:3px solid var(--rule-strong);
+    border-radius:2px;
+    padding:14px 16px 15px;
+    margin-bottom:10px;
+    box-shadow:var(--shadow);
+  }
+  .card.hl{ border-left-color:var(--seal); }
+  .card-breadcrumb{
+    font-size:calc(0.81rem * var(--content-scale)); color:var(--ink-faint); margin-bottom:4px;
+    display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+  }
+  .card-doc-tag{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:calc(0.74rem * var(--content-scale)); color:var(--ink-soft); border:1px solid var(--rule-strong); background:var(--paper-deep);
+    padding:2px 10px; border-radius:999px; font-weight:600;
+  }
+  .card-doc-tag .cat-dot{ width:7px; height:7px; }
+  .card-heading{
+    font-family:var(--serif); font-weight:bold; font-size:calc(1.42rem * var(--content-scale)); color:var(--ink);
+    margin:10px 0;
+  }
+  .card-heading .stamp{
+    display:inline-block; font-family:var(--sans); font-size:calc(0.74rem * var(--content-scale)); font-weight:700;
+    color:var(--seal); border:1.4px solid var(--seal); border-radius:4px;
+    padding:0 5px; margin-left:8px; transform:rotate(-3deg); vertical-align:2px;
+  }
+  .card-body{
+    font-size:calc(1.125rem * var(--content-scale)); line-height:1.85; color:var(--ink-soft);
+  }
+  .card-body p{ margin:0 0 8px; }
+  .card-body ul, .card-body ol{ margin:4px 0 8px; padding-left:22px; }
+  .card-body li{ margin-bottom:4px; }
+  .card-body strong{ color:var(--ink); }
+  .card-body blockquote{
+    margin:8px 0; padding:8px 12px; background:var(--paper-deep);
+    border-left:3px solid var(--brass); font-style:normal; color:var(--ink);
+    font-family:var(--serif);
+  }
+  .card-body table{ border-collapse:collapse; width:100%; margin:8px 0; font-size:calc(1.03rem * var(--content-scale)); }
+  .card-body th, .card-body td{ border:1px solid var(--rule-strong); padding:6px 9px; text-align:left; }
+  .card-body th{ background:var(--paper-deep); font-weight:700; font-family:var(--serif); }
+  .card-body code{ background:var(--paper-deep); padding:1px 5px; border-radius:3px; font-size:calc(0.99rem * var(--content-scale)); }
+  mark{ background:var(--brass-tint); color:var(--brass); padding:0 1px; border-radius:2px; font-weight:700;}
+  mark.examhit{ background:linear-gradient(transparent 62%, var(--seal-tint) 62%); color:inherit; font-weight:700; padding:0;
+    border-radius:0; }
+  mark.examhit.also-query{ background:var(--brass-tint); color:var(--brass); }
+  .card-body .wrong-idea{
+    display:block; background:var(--seal-tint); border-left:3px solid var(--seal);
+    padding:8px 11px; border-radius:3px; margin:6px 0; color:var(--ink);
+    font-family:var(--sans); font-style:normal;
+  }
+
+  .search-widen{ text-align:center; margin-top:-20px; }
+
+  mark.user-hl{
+    padding:0 1px; border-radius:2px; cursor:pointer; color:#1e293b;
+  }
+
+  .hl-toolbar, .hl-popover{
+    position:fixed; z-index:60; background:var(--ink); border-radius:10px;
+    padding:6px; box-shadow:0 6px 18px rgba(0,0,0,0.28);
+    display:flex; align-items:center; gap:6px;
+  }
+  .hl-swatch{
+    width:22px; height:22px; border-radius:50%; border:2px solid rgba(255,255,255,0.5);
+    cursor:pointer; padding:0;
+  }
+  .hl-swatch:hover{ border-color:#fff; transform:scale(1.1); }
+  .hl-popover{ flex-direction:row; align-items:center; padding:8px 10px; }
+  .hl-popover-swatches{ display:flex; gap:6px; }
+  .hl-popover-sep{ width:1px; height:20px; background:rgba(255,255,255,0.25); margin:0 2px; }
+  .hl-popover-delete{
+    border:none; background:transparent; padding:4px 6px; font-size:13px;
+    color:#fecdd3; cursor:pointer; white-space:nowrap;
+  }
+  .hl-popover-delete:hover{ color:#fff; text-decoration:underline; }
+  .empty-state{
+    text-align:center; padding:50px 20px; color:var(--ink-faint);
+  }
+  .empty-state .glyph{ font-size:34px; margin-bottom:10px; font-family:var(--serif); color:var(--rule-strong); }
+
+  /* ============ Review ============ */
+  .review-toolbar{
+    display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;
+  }
+  .review-toolbar-label{ font-size:12.5px; color:var(--ink-faint); flex-shrink:0; }
+  .tag-chip{
+    border:1px solid var(--rule-strong); background:var(--card); color:var(--ink-soft);
+    padding:7px 13px; border-radius:14px; font-size:13px; cursor:pointer;
+  }
+  .tag-chip.on{ background:var(--primary); border-color:var(--primary); color:#fff; }
+  .btn{
+    border:1px solid var(--rule-strong); background:var(--card); color:var(--ink);
+    padding:9px 16px; border-radius:3px; font-size:13.5px; cursor:pointer;
+  }
+  .btn:hover{ border-color:var(--ink); }
+  .btn.primary{ background:var(--primary); color:#fff; border-color:var(--primary); }
+  .btn.seal{ background:var(--seal); color:#fff; border-color:var(--seal); }
+  .btn:disabled{ opacity:.4; cursor:default; }
+
+  @media (min-width:860px){
+    .topbar-row{ padding:0 24px 0 0; }
+    .brand{ width:252px; }
+    .hamburger-btn{ display:none; }
+    .nav-scrim{ display:none !important; }
+    .shell{ flex-direction:row; align-items:flex-start; }
+    .cats-scroll{
+      flex-direction:column; overflow:visible; width:240px; flex-shrink:0;
+      padding:20px 12px 20px 0; border-right:none;
+      position:sticky; top:58px; height:calc(100vh - 58px); overflow-y:auto;
+    }
+    main{ flex:1; min-width:0; padding:20px 24px 60px; }
+  }
+  @media (max-width:520px){
+    .search-input{ padding-right:88px; }
+    .search-clear{ right:56px; }
+    .search-nav-compact{ right:6px; }
+    .brand-mark{ font-size:14.5px; }
+  }
+  @media (max-width:859px){
+    .cats-scroll{
+      display:none; position:fixed; top:58px; left:0; right:0; z-index:30;
+      max-height:calc(100vh - 58px); overflow-y:auto;
+      background:var(--paper); box-shadow:0 8px 16px rgba(15,23,42,0.12);
+    }
+    .cats-scroll.mobile-open{ display:flex; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar" id="topbar">
+  <div class="topbar-row">
+    <button id="mobileNavToggle" class="hamburger-btn" aria-label="開啟分類選單">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+    <div class="brand">
+      <span class="brand-mark">業務資料查詢</span>
+    </div>
+    <div class="search-wrap">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8.5" cy="8.5" r="6"/><line x1="13" y1="13" x2="18" y2="18"/></svg>
+      <input id="searchInput" class="search-input" type="text" placeholder="輸入關鍵字，例如：印鑑、掛失、逾期天數…" autocomplete="off">
+      <button id="searchClear" class="search-clear" aria-label="清除">✕</button>
+      <div id="searchNavBtns" class="search-nav-compact" style="display:none;">
+        <button id="searchPrev" class="search-nav-btn" aria-label="上一筆" title="上一筆">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 7 15 12"/></svg>
+        </button>
+        <button id="searchNext" class="search-nav-btn" aria-label="下一筆" title="下一筆">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 8 10 13 15 8"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="settings-wrap">
+      <button id="settingsBtn" class="settings-btn" aria-label="設定">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.7 7.7 0 0 0 0-2l2-1.5-2-3.4-2.3.9a7.6 7.6 0 0 0-1.7-1L15 3.6h-4l-.4 2.4a7.6 7.6 0 0 0-1.7 1l-2.3-.9-2 3.4L6.6 11a7.7 7.7 0 0 0 0 2l-2 1.5 2 3.4 2.3-.9c.5.4 1.1.75 1.7 1l.4 2.4h4l.4-2.4c.6-.25 1.2-.6 1.7-1l2.3.9 2-3.4-2-1.5Z"/></svg>
+      </button>
+      <div id="settingsPanel" class="settings-panel">
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">文字大小</div>
+            <div class="settings-sub">預設 18px</div>
+          </div>
+          <div class="scale-ctrl" role="group" aria-label="文字大小">
+            <button id="scaleDown" aria-label="縮小文字">A－</button>
+            <span id="scaleLabel" class="scale-label">100%</span>
+            <button id="scaleUp" aria-label="放大文字">A＋</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">外觀模式</div>
+            <div class="settings-sub" id="themeToggleLabel">亮色模式</div>
+          </div>
+          <button id="themeToggle" class="switch" aria-label="切換亮暗模式"></button>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">題庫關鍵字比對</div>
+            <div class="settings-sub" id="examToggleLabel">標出與歷屆題庫重疊的字詞</div>
+          </div>
+          <button id="examToggle" class="switch on" aria-label="切換題庫關鍵字標示"></button>
+        </div>
+        <div class="settings-row import-row">
+          <div>
+            <div class="settings-label">匯入 MD 文件</div>
+            <div class="settings-sub" id="importStatus">可加入自己的 .md 文件</div>
+          </div>
+        </div>
+        <div class="settings-row import-actions">
+          <label class="btn small" for="mdFileInput">選擇檔案</label>
+          <input type="file" id="mdFileInput" accept=".md,.markdown,.zip,text/markdown,application/zip" multiple hidden>
+          <button id="clearImportBtn" class="btn small ghost" style="display:none;">清除匯入</button>
+        </div>
+        <div class="settings-row import-row">
+          <div>
+            <div class="settings-label">螢光筆標記</div>
+            <div class="settings-sub" id="hlCountStatus">尚未標記任何內容</div>
+          </div>
+        </div>
+        <div class="settings-row import-actions">
+          <button id="hlExportBtn" class="btn small">匯出</button>
+          <label class="btn small" for="hlImportInput">匯入</label>
+          <input type="file" id="hlImportInput" accept=".json,application/json" hidden>
+          <button id="hlClearBtn" class="btn small ghost" style="display:none;">清除全部</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="navScrim" class="nav-scrim"></div>
+
+<div id="hlToolbar" class="hl-toolbar" style="display:none;">
+  <button class="hl-swatch" data-color="yellow" style="background:#fde047" aria-label="黃色螢光筆"></button>
+  <button class="hl-swatch" data-color="green" style="background:#86efac" aria-label="綠色螢光筆"></button>
+  <button class="hl-swatch" data-color="blue" style="background:#93c5fd" aria-label="藍色螢光筆"></button>
+  <button class="hl-swatch" data-color="pink" style="background:#f9a8d4" aria-label="粉色螢光筆"></button>
+  <button class="hl-swatch" data-color="purple" style="background:#d8b4fe" aria-label="紫色螢光筆"></button>
+</div>
+
+<div id="hlPopover" class="hl-popover" style="display:none;">
+  <div class="hl-popover-swatches">
+    <button class="hl-swatch" data-color="yellow" style="background:#fde047" aria-label="改為黃色"></button>
+    <button class="hl-swatch" data-color="green" style="background:#86efac" aria-label="改為綠色"></button>
+    <button class="hl-swatch" data-color="blue" style="background:#93c5fd" aria-label="改為藍色"></button>
+    <button class="hl-swatch" data-color="pink" style="background:#f9a8d4" aria-label="改為粉色"></button>
+    <button class="hl-swatch" data-color="purple" style="background:#d8b4fe" aria-label="改為紫色"></button>
+  </div>
+  <span class="hl-popover-sep"></span>
+  <button id="hlPopoverDelete" class="hl-popover-delete">刪除</button>
+</div>
+
+<div class="shell">
+  <div id="importLanding" class="import-landing">
+    <div class="import-landing-card">
+      <div class="import-landing-glyph">卷</div>
+      <h1 class="import-landing-title">業務資料查詢</h1>
+      <p class="import-landing-desc">請匯入檔案</p>
+      <p class="import-landing-desc">檔名請用「分類-文件名稱.md」格式</p>
+      <label class="btn primary large" for="landingFileInput">請選擇檔案</label>
+      <input type="file" id="landingFileInput" accept=".md,.markdown,.zip,text/markdown,application/zip" multiple hidden>
+      <div id="landingStatus" class="import-landing-status"></div>
+    </div>
+  </div>
+  <nav id="catsScroll" class="cats-scroll"></nav>
+  <main id="main"></main>
+</div>
+
+<script id="sop-data" type="application/json">{"rawDocs": {}, "examKeywordFreq": {"12日": 3, "11日": 8, "22日": 7, "21日": 7, "8日": 4, "1日": 29, "15日": 13, "10日": 13, "5日": 11, "2年內": 13, "9成": 6, "1年": 50, "2年": 22, "2日": 6, "100萬元": 29, "30萬元": 7, "5萬元": 11, "25萬元": 1, "95萬元": 3, "22萬元": 2, "25日": 5, "10萬元": 27, "85萬元": 2, "1個月": 15, "2個月": 14, "45日內": 1, "6個月": 38, "28日": 2, "30日": 10, "31日": 7, "8折": 7, "500萬元": 30, "200萬元": 18, "3年": 14, "7條": 1, "3條": 4, "4條": 1, "6條": 3, "1萬元": 16, "3個月": 20, "15工作日": 1, "77條": 1, "20日": 12, "5年": 24, "3,059,077元": 2, "3,519,692元": 2, "48萬": 2, "28萬": 3, "4.9日": 3, "4.1日": 1, "9日": 1, "24條": 1, "2萬元": 9, "100,001元": 2, "3萬元": 19, "30,001元": 1, "10,000元": 1, "88條": 1, "1000元": 5, "5000元": 4, "5,000元": 2, "1,000元": 4, "1條": 2, "50萬元": 27, "3萬": 3, "50萬": 5, "100萬": 5, "25萬": 2, "5條": 1, "5 年": 1, "66條": 2, "250元": 2, "50張": 1, "7成": 8, "8成": 8, "124條": 1, "45條": 1, "7日": 5, "334條": 1, "300萬元": 9, "25張": 2, "10億": 1, "5億元": 2, "9折": 1, "10億元": 1, "20億元": 1, "7折": 1, "30億元": 2, "6折": 1, "4個月": 2, "30條": 3, "500元": 9, "100元": 8, "130元": 2, "102次": 1, "103次": 1, "104次": 1, "2萬": 2, "5萬": 1, "8人": 1, "10元": 2, "15元": 1, "6元": 1, "5元": 2, "7元": 1, "50元": 2, "75元": 4, "200元": 4, "300元": 6, "15萬元": 7, "0元": 1, "3.5元": 1, "9.5元": 1, "150元": 2, "2張以上": 1, "20條": 1, "40萬": 2, "4,500元": 1, "1成": 7, "2000萬元": 3, "1500萬元": 2, "3日": 9, "10萬": 1, "25億": 1, "5,000萬元": 1, "3成": 2, "48條": 1, "131條": 1, "130條": 1, "33條": 5, "9條": 2, "200人": 1, "20萬元": 5, "60萬元": 4, "65萬元": 1, "72條": 1, "6成": 7, "3000萬元": 1, "2500萬元": 1, "2,100萬元": 1, "1,800萬元": 3, "1,170萬元": 1, "1,000萬元": 4, "1,260萬元": 1, "7000萬元": 1, "9億元": 1, "2,500萬元": 1, "2,200萬元": 1, "1,900萬元": 1, "250萬元": 1, "400萬元": 1, "150萬元": 4, "120萬元": 2, "7年": 5, "10年": 4, "12年": 1, "1000張": 1, "125元": 1, "132元": 1, "136元": 1, "100張": 1, "80元": 1, "68元": 1, "70元": 1, "42元": 1, "20元": 2, "60日": 1, "60元": 1, "40元": 1, "4成": 5, "5成": 4, "1億元": 1, "22條": 4, "1000萬": 1, "600萬元": 1, "540萬元": 1, "10日內": 3, "800萬元": 3, "1,300萬元": 1, "2,300萬元": 1, "3張": 1, "40萬元": 1, "24日": 1, "32.5元": 1, "14日": 3, "33.2元": 1, "3000日": 1, "9個月": 1, "4年": 2, "20年": 5, "156,000元": 1, "650,100元": 1, "2,500,000元": 1, "618,000元": 1, "847,500元": 1, "151條": 1, "5個月": 2, "375,100元": 3, "26日": 1, "521條": 1, "4日": 4, "15條": 1, "3億元": 3, "5人": 1, "80萬元": 4, "160萬元": 2, "180萬元": 1, "240萬元": 1, "8年": 2, "16年": 1, "9.5成": 1, "148萬元": 1, "30年": 5, "1年內": 3, "3年內": 1, "103 年": 3, "6,900萬元": 1, "7,500萬元": 1, "2,070萬元": 1, "2,760萬元": 1, "2,250萬元": 1, "6,700萬元": 1, "2,050萬元": 1, "2,030萬元": 1, "1,970萬元": 1, "7.5成": 2, "3,000萬元": 4, "2,800萬元": 1, "15年": 6, "1200萬元": 1, "1800萬元": 2, "55萬元": 1, "45萬元": 1, "90萬元": 2, "1,200萬元": 2, "2成": 3, "6.5成": 3, "75萬元": 1, "4,000萬元": 1, "1,600萬元": 2, "5,013,333元": 1, "25年": 1, "0.5成": 1, "12條": 1, "8.4成": 1, "8.5成": 1, "9.6成": 1, "2,000萬元": 2, "4.5萬元": 1, "45萬": 1, "20萬": 3, "30萬": 2, "19萬元": 1, "14萬元": 1, "30 次": 1, "6萬": 1, "350元": 1, "1人": 1, "2人": 6, "250人": 1, "100人": 1, "2條": 1, "28條": 2, "16條": 1, "7.4萬": 1, "8元": 1, "6萬元": 1, "5次": 3, "14日內": 2, "14條": 1, "60日內": 1, "0.3元": 1, "30,000元": 2, "100,000元": 2, "11條": 1, "2日內": 2, "3日內": 1, "1次": 3, "25條": 2, "600元": 2, "2,000元": 2, "89條": 1, "30日內": 2, "2000元": 2, "10天內": 1, "106條": 1, "8條": 1, "3,000元": 2, "300萬": 1, "120億元": 1, "34條": 1, "6,000元": 1, "27條": 1, "1000萬元": 6, "3次": 3, "4次": 1, "5年內": 1, "242條": 1, "244 條": 1, "739條": 1, "20日內": 1, "200萬": 1, "180天內": 4, "8次": 1, "999元": 1, "5日內": 2, "2次": 1, "26次": 1, "10 億元": 1, "不等於": 2, "到期不續存": 1, "質借前按存單利率加1.5": 1, "以現金": 2, "分別計算": 1, "由低至高": 1, "登錄單": 1, "代傳票": 1, "或簽名": 1, "存摺類": 1, "機動利率": 1, "原存款利率": 1, "之權利": 1, "原留印鑑": 1, "不論金額多寡": 1, "在職員工": 1, "出納人員": 1, "新開立專戶": 1, "不適用": 1, "轉帳方式": 1, "無摺存款": 1, "開戶檢核表": 2, "總公司": 2, "V0205新舊證號影像檔合併": 2, "衍生管制帳戶": 3, "名義開戶": 1, "子公司": 1, "活期儲蓄存款採": 1, "零元開戶": 1, "活期儲蓄存款零元開戶": 1, "起息金額5,000元": 1, "應徵提自我聲明書": 1, "自我聲明書": 1, "負責人": 7, "股份有限公司": 1, "財團法人": 1, "並列負責人姓名": 1, "拒絕開戶資料庫": 1, "受監護宣告之人": 1, "監護人": 1, "清算人": 1, "代表公司": 1, "辦理開戶": 1, "CRS辨識": 1, "實質受益人": 1, "公司本身": 1, "籌備處": 2, "無須留存負責人影像檔": 1, "居留證查詢網": 3, "聲明書": 1, "一定金額": 1, "股東名冊": 2, "高風險": 1, "審查措施": 1, "其他應付款": 7, "開戶人": 1, "語音轉帳": 2, "警示帳戶": 8, "先進先出": 1, "被害人提出返還": 1, "禁止背書轉讓": 7, "由負責人": 1, "或法定代理人": 2, "存款不足": 2, "照付現款": 1, "票據掛失止付通知書": 2, "遺失票據申報書": 3, "本行支票": 1, "掛失止付通知書": 2, "經掛失止付": 1, "理由退票": 2, "存款不足及票據經掛失止付": 1, "票據掛失止付備付款": 2, "提供虛擬資產服務之事業或人員": 1, "空白作廢": 1, "掛失空白票據": 1, "變更內容": 1, "經理或副理": 1, "被授權人": 1, "原K31傳票": 1, "或申請": 2, "取消禁止背書轉讓": 2, "現金收付章": 3, "櫃員章": 1, "腰圓形行名章": 2, "其他應收款": 6, "溢付短收現金": 1, "待轉款項": 2, "出納主管及轄管業務主辦人員報告": 1, "匯出入失敗查詢": 1, "1018報表": 1, "總筆數及總金額": 1, "或統一證號": 1, "團體聲明書": 3, "國內匯出匯款作業檢核表": 1, "匯款金額達50萬元": 1, "匯款人非扣款帳戶本人": 1, "靜止戶": 1, "警示戶": 1, "保管箱": 2, "鑰匙袋": 2, "手續費收入": 3, "負責人姓名": 1, "身分證字號": 1, "放大鏡": 1, "自行辦理": 1, "實體身分自我聲明書": 2, "表單A": 2, "理核准": 1, "行內全球資訊網": 1, "中央政府機關": 1, "國庫帳戶開戶申請書": 1, "財政部國庫機關專戶核定表": 1, "代收款項客戶確認聯": 1, "副理核准": 1, "偽造券作廢": 2, "按各該筆定期": 1, "公司設立": 1, "遇例假日順延": 1, "本行因修繕": 1, "存款利率加1.5": 1, "警察機關": 1, "出納主辦": 2, "及出納主辦": 1, "機關專戶存款": 1, "保管品": 1, "公庫保管品": 2, "應付保管品": 1, "執票人": 1, "保證人": 2, "連帶保證人": 2, "資金用途": 1, "營業單位": 1, "基準利率": 1, "金額欄": 1, "背書不連續": 1, "通報作業": 1, "短期墊款": 3, "業務費用": 4, "政府機關": 4, "公營事業": 3, "出生年月日": 2, "待轉款": 1, "自然人": 1, "違約金": 1, "債務人": 3, "最近六個月平均餘額": 1, "信用額度": 1, "雜項收入": 1, "匯出匯款": 3, "或取消": 1, "含等值外幣": 2, "公司名稱": 1, "重要單摺庫存明細查詢": 1, "匯款人名稱": 2, "印鑑卡": 1, "虛擬通貨平台及交易業務事業": 1, "交易有關對象": 1, "限辦理臺灣銀行開戶使用": 1, "Z1230客戶往來風險評級": 1, "內付款": 1, "有權簽章人員": 2, "明細表": 1, "會計人員": 1, "現金收入": 1, "現金支出": 1, "手續費": 1, "財政部": 1, "客戶資料問卷": 2, "電子郵件": 1, "客戶基本": 1, "無行為能力人": 1, "受監護人": 1, "客戶填寫": 1, "綜合理財帳戶": 3, "未成年人": 1, "以文字": 1, "大陸地區人民": 1, "遲延利息": 3, "未記載": 1, "付款地": 1, "付款人": 1, "發票年": 1, "之支票": 1, "行職業": 1, "網路銀行": 1, "未申請": 1, "客戶申請": 1, "開戶申請": 1, "存款帳戶": 1, "交易明細查詢": 1, "授權書": 1, "檢查碼": 1, "客戶透過": 1, "須填寫": 1, "留存紀錄": 1, "不定期": 1, "臺灣銀行": 1, "客戶關懷": 1, "資料庫": 1, "非自然人": 6}, "examMeta": {"questionCount": 2089, "keywordCount": 510}}</script>
+<script>
+(function(){
+  const RAW = JSON.parse(document.getElementById('sop-data').textContent);
+  const RAW_DOCS_MAP = Object.assign({}, RAW.rawDocs || {});
+  const EXAM_FREQ = RAW.examKeywordFreq || {};
+  const EXAM_META = RAW.examMeta || {};
+  const EXAM_KEYS_SORTED = Object.keys(EXAM_FREQ).sort((a,b)=>b.length-a.length);
+
+  marked.setOptions({ breaks:true });
+
+  let ALL = [];
+  let HIGHLIGHTS = [];
+  let importedFiles = []; // [{id, name}]
+  let DOCS = [];
+  let BASE_DOCS = [];
+  let hasAutoSelectedCategory = false;
+
+  function shortTitle(t){
+    return t.replace(/[（(].*?[)）]/g,'').replace(/：.*$/,'').replace(/SOP$/,'').trim();
+  }
+
+  function computeExamHits(content){
+    const found = [];
+    for(const kw of EXAM_KEYS_SORTED){
+      if(content.includes(kw)) found.push(kw);
+    }
+    return found;
+  }
+
+  function finalizeDoc(d){
+    d.shortTitle = shortTitle(d.title);
+    if(d.category === undefined){
+      const m = d.id.match(/^([^-]+)-/);
+      d.category = m ? m[1] : null;
+    }
+    d.sections.forEach(s=>{
+      if(!('examHits' in s)) s.examHits = computeExamHits(s.content);
+    });
+  }
+
+  const STORAGE_KEY = 'sopFrameworkDocs';
+  const HL_STORAGE_KEY = 'sopUserHighlights';
+  const HL_COLORS = [
+    {key:'yellow', hex:'#fde047'},
+    {key:'green',  hex:'#86efac'},
+    {key:'blue',   hex:'#93c5fd'},
+    {key:'pink',   hex:'#f9a8d4'},
+    {key:'purple', hex:'#d8b4fe'}
+  ];
+  function hlColorHex(key){
+    const c = HL_COLORS.find(c=>c.key===key);
+    return c ? c.hex : HL_COLORS[0].hex;
+  }
+  let USER_HIGHLIGHTS = [];
+  function loadUserHighlights(){
+    try{
+      const raw = localStorage.getItem(HL_STORAGE_KEY);
+      USER_HIGHLIGHTS = raw ? JSON.parse(raw) : [];
+    }catch(e){ USER_HIGHLIGHTS = []; }
+  }
+  function saveUserHighlights(){
+    try{ localStorage.setItem(HL_STORAGE_KEY, JSON.stringify(USER_HIGHLIGHTS)); }catch(e){ /* ignore */ }
+  }
+
+  function loadStoredRawDocs(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function saveStoredRawDocs(map){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(map)); }catch(e){ /* storage full or unavailable; ignore */ }
+  }
+  function currentRawDocsMap(){
+    const map = {};
+    DOCS.forEach(d => { if(d.rawText) map[d.id] = d.rawText; });
+    return map;
+  }
+
+  function isJunkDocId(id){
+    return id.split(/[-/]/).some(part => part.startsWith('._')) || id === '__MACOSX';
+  }
+
+  function loadBaseDocs(){
+    const stored = loadStoredRawDocs();
+    let source = (stored && Object.keys(stored).length) ? stored : RAW_DOCS_MAP;
+    const cleanIds = Object.keys(source).filter(id => !isJunkDocId(id));
+    const hadJunk = cleanIds.length !== Object.keys(source).length;
+    DOCS = cleanIds.map(id => {
+      const doc = parseMarkdownToDoc(source[id], id, id, false);
+      doc.rawText = source[id];
+      return doc;
+    });
+    DOCS.forEach(finalizeDoc);
+    BASE_DOCS = DOCS.slice();
+    rebuildIndexes();
+    if(hadJunk && stored){
+      // A previously-imported bundle carried macOS metadata junk; re-save the cleaned set
+      saveStoredRawDocs(currentRawDocsMap());
+    }
+  }
+
+  function rebuildIndexes(){
+    ALL = [];
+    DOCS.forEach(d => d.sections.forEach(s => ALL.push(Object.assign({docTitle:d.title, docTitleShort:d.shortTitle, docCategory:d.category}, s))));
+    HIGHLIGHTS = ALL.filter(s => s.highlight);
+  }
+
+  const REVIEW_TAGS = [
+    {key:'point',   label:'學習重點', match:['學習重點','核心規定','核心心法']},
+    {key:'mistake', label:'易錯觀念總表', match:['易錯觀念']},
+    {key:'exam',    label:'與題庫對應的內容', match:['題庫']},
+    {key:'numbers', label:'考前必背數字', match:['必背數字']},
+    {key:'review',  label:'考前總複習', match:['總複習']}
+  ];
+  function reviewTagOf(headingText){
+    for(const t of REVIEW_TAGS){
+      if(t.match.some(k => headingText.includes(k))) return t.key;
+    }
+    return null;
+  }
+
+  loadBaseDocs();
+  loadUserHighlights();
+
+  function parseMarkdownToDoc(text, docId, fallbackTitle, isImported){
+    const lines = text.split(/\r?\n/);
+    let docTitle = fallbackTitle;
+    for(const l of lines){
+      const m = l.match(/^(#{1,6})\s+(.*)/);
+      if(m && m[1].length===1){ docTitle = m[2].trim(); break; }
+    }
+    const headings = [];
+    lines.forEach((l,i)=>{
+      const m = l.match(/^(#{1,6})\s+(.*)/);
+      if(m) headings.push({line:i, level:m[1].length, text:m[2].trim()});
+    });
+    const sections = [];
+    const stack = [];
+    let counter = 0;
+    let i = 0;
+    while(i < headings.length){
+      const h = headings[i];
+      const end = i+1<headings.length ? headings[i+1].line : lines.length;
+      let content = lines.slice(h.line+1, end).join('\n').trim();
+      while(stack.length && stack[stack.length-1].level >= h.level) stack.pop();
+      const breadcrumb = stack.map(b=>b.text).join(' › ');
+      stack.push({level:h.level, text:h.text});
+
+      // Fold an immediately-following "### SOP規定" child straight into this
+      // heading's own card, so a topic never gets split across two cards.
+      let consumedNext = false;
+      if(i+1 < headings.length){
+        const nxt = headings[i+1];
+        if(nxt.level > h.level && /SOP規定/.test(nxt.text)){
+          const nEnd = i+2<headings.length ? headings[i+2].line : lines.length;
+          const nContent = lines.slice(nxt.line+1, nEnd).join('\n').trim();
+          if(nContent) content = content ? (content + '\n\n' + nContent) : nContent;
+          consumedNext = true;
+        }
+      }
+
+      if(content){
+        counter++;
+        const tag = reviewTagOf(h.text);
+        sections.push({
+          id: docId+'-s'+counter,
+          docId: docId,
+          level: h.level,
+          heading: h.text,
+          breadcrumb: breadcrumb,
+          content: content,
+          highlight: !!tag,
+          reviewTag: tag
+        });
+      }
+      i += consumedNext ? 2 : 1;
+    }
+    return { id: docId, title: docTitle, sections, imported: !!isImported };
+  }
+
+  function mergeDoc(doc){
+    const idx = DOCS.findIndex(d => d.id === doc.id);
+    finalizeDoc(doc);
+    if(idx >= 0) DOCS[idx] = doc; else DOCS.push(doc);
+  }
+
+  function docIdFromZipPath(zipPath){
+    const parts = zipPath.split('/').filter(Boolean);
+    const filename = parts[parts.length - 1].replace(/\.(md|markdown)$/i, '');
+    if(/^[^-/]+-/.test(filename)) return filename; // already "分類-文件名" style
+    if(parts.length > 1) return parts[parts.length - 2] + '-' + filename;
+    return filename;
+  }
+
+  function updateImportStatus(){
+    const statusEl = document.getElementById('importStatus');
+    const clearBtn = document.getElementById('clearImportBtn');
+    if(!statusEl) return;
+    if(importedFiles.length){
+      statusEl.textContent = `本次已匯入 ${importedFiles.length} 份：${importedFiles.map(f=>f.name).join('、')}`;
+      clearBtn.style.display = 'inline-flex';
+    } else {
+      statusEl.textContent = '可加入自己的 .md 文件';
+      clearBtn.style.display = 'none';
+    }
+  }
+
+  async function importOneMarkdown(text, docId){
+    const doc = parseMarkdownToDoc(text, docId, docId, true);
+    doc.rawText = text;
+    mergeDoc(doc);
+  }
+
+  function trackImportedFile(id, name){
+    const existingIdx = importedFiles.findIndex(f => f.id === id);
+    const rec = { id, name };
+    if(existingIdx >= 0) importedFiles[existingIdx] = rec; else importedFiles.push(rec);
+  }
+
+  function isMacZipJunk(zipPath){
+    return zipPath.split('/').some(part => part === '__MACOSX' || part.startsWith('._'));
+  }
+
+  async function importZipFile(file){
+    const buf = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    const entries = Object.keys(zip.files)
+      .map(k => zip.files[k])
+      .filter(f => !f.dir && /\.(md|markdown)$/i.test(f.name) && !isMacZipJunk(f.name));
+    for(const entry of entries){
+      const text = await entry.async('string');
+      const docId = docIdFromZipPath(entry.name);
+      await importOneMarkdown(text, docId);
+    }
+    // Track the whole zip as a single entry, not one per extracted file,
+    // so the import status stays short and manageable even for large bundles.
+    trackImportedFile('zip:' + file.name, `${file.name}（${entries.length} 份）`);
+    return entries.length;
+  }
+
+  async function handleFilesImport(fileList){
+    const files = Array.from(fileList);
+    let importedCount = 0;
+    for(const file of files){
+      if(/\.zip$/i.test(file.name)){
+        importedCount += await importZipFile(file);
+      } else if(/\.(md|markdown)$/i.test(file.name)){
+        const text = await file.text();
+        const docId = file.name.replace(/\.(md|markdown)$/i, '');
+        await importOneMarkdown(text, docId);
+        trackImportedFile(docId, file.name);
+        importedCount++;
+      }
+    }
+    if(!importedCount) return;
+    rebuildIndexes();
+    saveStoredRawDocs(currentRawDocsMap());
+    updateImportStatus();
+    render();
+  }
+
+  function clearImports(){
+    DOCS = [];
+    BASE_DOCS = [];
+    importedFiles = [];
+    state.docId = null; state.categoryGroup = null; state.reviewGroup = null; state.reviewCategory = null; state.view = 'browse';
+    hasAutoSelectedCategory = false;
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    rebuildIndexes();
+    updateImportStatus();
+    render();
+  }
+
+  const state = {
+    view: 'browse',        // 'browse' | 'search' | 'review'
+    categoryGroup: null,    // e.g. "存匯" / "授信" / null for all
+    docId: null,            // specific docId within (or outside) a group, or null
+    query: '',
+    searchIndex: 0,
+    searchIgnoreScope: false,
+    reviewCategory: null,   // one of REVIEW_TAGS[].key, or null for all
+    reviewGroup: null,      // e.g. "存匯" / "授信" / null for all, filters the review view by category
+    examOn: true
+  };
+
+  function esc(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function escReg(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+  function flexibleNumberPattern(q){
+    // Between any two adjacent digits in the query, allow an optional comma in the
+    // matched text, so searching "5000" also finds "5,000" written with thousands separators.
+    return escReg(q).replace(/(\d)(?=\d)/g, '$1,?');
+  }
+  function textMatchesQuery(text, q){
+    try{
+      return new RegExp(flexibleNumberPattern(q), 'i').test(text);
+    }catch(e){ return text.includes(q); }
+  }
+
+  function highlightHTML(html, q, counterRef){
+    if(!q) return html;
+    try{
+      const re = new RegExp('('+flexibleNumberPattern(q)+')', 'gi');
+      return html.split(/(<[^>]+>)/g).map(chunk=>{
+        if(chunk.startsWith('<')) return chunk;
+        return chunk.replace(re, (m)=>{
+          const idx = counterRef ? counterRef.n++ : 0;
+          return `<mark data-smi="${idx}">${m}</mark>`;
+        });
+      }).join('');
+    }catch(e){ return html; }
+  }
+
+  const CAT_PALETTE = ['#22c55e','#3b82f6','#f59e0b','#a855f7','#ef4444','#06b6d4','#ec4899','#6366f1','#14b8a6','#f97316','#84cc16','#8b5cf6'];
+  const CATEGORY_ORDER = [
+    {code:'存匯', label:'存匯'},
+    {code:'授信', label:'授信'},
+    {code:'外匯', label:'外匯'},
+    {code:'會計', label:'會計'},
+    {code:'理財', label:'理財'},
+    {code:'信託', label:'信託'},
+    {code:'法務', label:'金融法務常識'},
+    {code:'電金', label:'數位金融'},
+    {code:'電腦', label:'電腦常識'},
+    {code:'永續發展', label:'企業永續發展'}
+  ];
+  const OTHER_LABEL = '其他';
+  function categoryLabel(code){
+    const entry = CATEGORY_ORDER.find(c=>c.code===code);
+    return entry ? entry.label : OTHER_LABEL;
+  }
+  function effectiveCategoryKey(code){
+    if(!code) return null;
+    return CATEGORY_ORDER.some(c=>c.code===code) ? code : OTHER_LABEL;
+  }
+  function allCategories(){
+    const present = new Set(DOCS.map(d=>d.category).filter(Boolean).map(effectiveCategoryKey));
+    const ordered = CATEGORY_ORDER.map(c=>c.code).filter(code=>present.has(code));
+    if(present.has(OTHER_LABEL)) ordered.push(OTHER_LABEL);
+    return ordered;
+  }
+  function categoryColor(rawCode){
+    const key = effectiveCategoryKey(rawCode);
+    const cats = allCategories();
+    const idx = cats.indexOf(key);
+    return CAT_PALETTE[idx >= 0 ? idx % CAT_PALETTE.length : 0];
+  }
+
+  function highlightTerms(html, terms, cls){
+    if(!terms || !terms.length) return html;
+    const sorted = terms.slice().sort((a,b)=>b.length-a.length);
+    const re = new RegExp('非?(?:'+sorted.map(escReg).join('|')+')', 'g');
+    return html.split(/(<[^>]+>)/g).map(chunk=>{
+      if(chunk.startsWith('<')) return chunk;
+      const ranges = [];
+      let m;
+      re.lastIndex = 0;
+      while((m = re.exec(chunk))){
+        ranges.push([m.index, m.index + m[0].length]);
+        if(m[0].length === 0) re.lastIndex++;
+      }
+      if(!ranges.length) return chunk;
+      // Merge matches that touch, overlap, or are separated only by date/number
+      // connector characters, so a split keyword dictionary never leaves a
+      // date or figure like 115年7月1日 highlighted in visibly broken pieces.
+      const merged = [ranges[0].slice()];
+      for(let i=1;i<ranges.length;i++){
+        const last = merged[merged.length-1];
+        const gap = chunk.slice(last[1], ranges[i][0]);
+        if(ranges[i][0] <= last[1] || /^[年月日至～~\-、－至]{0,2}$/.test(gap)){
+          last[1] = Math.max(last[1], ranges[i][1]);
+        } else {
+          merged.push(ranges[i].slice());
+        }
+      }
+      let out = '';
+      let cursor = 0;
+      merged.forEach(([start,end])=>{
+        out += chunk.slice(cursor, start);
+        out += `<mark class="${cls}">${chunk.slice(start,end)}</mark>`;
+        cursor = end;
+      });
+      out += chunk.slice(cursor);
+      return out;
+    }).join('');
+  }
+
+  function renderCard(sec, opts){
+    opts = opts || {};
+    const q = opts.query || '';
+    if(sec.level === 1){
+      return '';
+    }
+    let bodyHtml = marked.parse(sec.content);
+    let headHtml = esc(sec.heading);
+    if(state.examOn && sec.examHits && sec.examHits.length){
+      bodyHtml = highlightTerms(bodyHtml, sec.examHits, 'examhit');
+      headHtml = highlightTerms(headHtml, sec.examHits, 'examhit');
+    }
+    if(q){
+      bodyHtml = highlightHTML(bodyHtml, q, opts.markCounter);
+      headHtml = highlightHTML(headHtml, q, opts.markCounter);
+    }
+    const catColor = sec.docCategory ? categoryColor(sec.docCategory) : null;
+    const catStyle = catColor ? ` style="background:${catColor};border-color:${catColor};color:#fff;"` : '';
+    return `<article class="card ${sec.highlight ? 'hl':''}">
+      <div class="card-breadcrumb">
+        ${sec.docCategory ? `<span class="card-doc-tag"${catStyle}>${esc(categoryLabel(sec.docCategory))}</span>` : ''}
+        <span class="card-doc-tag"${catStyle}>${esc(sec.docTitleShort || sec.docTitle)}</span>
+      </div>
+      <h3 class="card-heading">${headHtml}${sec.highlight ? '<span class="stamp">重點</span>' : ''}</h3>
+      <div class="card-body" data-sec-id="${esc(sec.id)}">${bodyHtml}</div>
+    </article>`;
+  }
+
+  function renderCats(){
+    const el = document.getElementById('catsScroll');
+    let html = '';
+    html += `<button class="tree-item top-item ${state.view==='browse'&&!state.categoryGroup&&!state.docId?'active':''}" data-action="all">全部內容 <span class="tree-count">${DOCS.length}</span></button>`;
+    html += `<button class="tree-item top-item review ${state.view==='review'?'active':''}" data-action="review">★ 重點複習 <span class="tree-count">${HIGHLIGHTS.length}</span></button>`;
+
+    const groupMap = new Map();
+    const ungrouped = [];
+    DOCS.forEach(d=>{
+      if(d.category){
+        const key = effectiveCategoryKey(d.category);
+        if(!groupMap.has(key)) groupMap.set(key, []);
+        groupMap.get(key).push(d);
+      } else {
+        ungrouped.push(d);
+      }
+    });
+
+    allCategories().forEach(cat=>{
+      const docsInCat = groupMap.get(cat);
+      const expanded = state.categoryGroup===cat;
+      const dotColor = categoryColor(cat);
+      const label = categoryLabel(cat);
+      html += `<div class="tree-group">`;
+      const groupActive = state.view==='browse' && expanded && !state.docId;
+      html += `<button class="tree-item group-item ${groupActive?'active':''}" data-action="group" data-cat="${esc(cat)}">
+        <span class="tree-caret">${expanded?'▾':'▸'}</span><span class="cat-dot" style="background:${dotColor}"></span>${esc(label)} <span class="tree-count">${docsInCat.length}篇</span>
+      </button>`;
+      if(expanded){
+        html += `<div class="tree-children">`;
+        docsInCat.forEach(d=>{
+          const dActive = state.view==='browse' && state.docId===d.id;
+          html += `<button class="tree-item ${dActive?'active':''}" data-action="doc" data-id="${d.id}">${esc(d.shortTitle)}</button>`;
+        });
+        html += `</div>`;
+      }
+      html += `</div>`;
+    });
+
+    ungrouped.forEach(d=>{
+      const active = state.view==='browse' && state.docId===d.id;
+      html += `<button class="tree-item top-item ${active?'active':''}" data-action="doc" data-id="${d.id}">${esc(d.shortTitle)}</button>`;
+    });
+
+    el.innerHTML = html;
+    el.querySelectorAll('.tree-item').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const action = btn.dataset.action;
+        if(action==='all'){ state.view='browse'; state.categoryGroup=null; state.docId=null; }
+        else if(action==='review'){ state.view='review'; }
+        else if(action==='group'){
+          state.view='browse'; state.docId=null;
+          state.categoryGroup = (state.categoryGroup===btn.dataset.cat) ? null : btn.dataset.cat;
+        }
+        else if(action==='doc'){
+          state.view='browse';
+          state.docId=btn.dataset.id;
+          const d = DOCS.find(x=>x.id===btn.dataset.id);
+          state.categoryGroup = d ? d.category : null;
+        }
+        document.getElementById('searchInput').value='';
+        state.query='';
+        closeMobileNav();
+        render();
+      });
+    });
+  }
+
+  function renderMain(){
+    const main = document.getElementById('main');
+    if(state.query){ renderSearch(main); return; }
+    if(state.view==='review'){ renderReview(main); return; }
+    renderBrowse(main);
+  }
+
+  function renderBrowse(main){
+    let sections, title;
+    if(state.docId){
+      const d = DOCS.find(x=>x.id===state.docId);
+      sections = d.sections;
+      title = d.title;
+    } else if(state.categoryGroup){
+      const idsInGroup = new Set(DOCS.filter(d=>effectiveCategoryKey(d.category)===state.categoryGroup).map(d=>d.id));
+      sections = ALL.filter(s => idsInGroup.has(s.docId));
+      title = categoryLabel(state.categoryGroup) + '類內容';
+    } else {
+      sections = ALL;
+      title = '全部內容';
+    }
+    let html = `<div class="meta-row"><div class="meta-title">${esc(title)}</div><div class="meta-count">共 ${sections.length} 節</div></div>`;
+    if(sections.length===0){
+      html += emptyState('尚無內容');
+    } else {
+      html += sections.map(s=>{
+        const fallbackDoc = DOCS.find(x=>x.id===s.docId) || {};
+        return renderCard(Object.assign({
+          docTitleShort: s.docTitleShort || fallbackDoc.shortTitle,
+          docCategory: s.docCategory !== undefined ? s.docCategory : fallbackDoc.category
+        }, s));
+      }).join('');
+    }
+    main.innerHTML = html;
+  }
+
+  function currentScopeLabel(){
+    const parts = [];
+    if(state.view === 'review'){
+      parts.push('重點複習');
+      if(state.reviewGroup) parts.push(categoryLabel(state.reviewGroup));
+      if(state.reviewCategory){
+        const t = REVIEW_TAGS.find(t=>t.key===state.reviewCategory);
+        if(t) parts.push(t.label);
+      }
+    } else {
+      if(state.docId){
+        const d = DOCS.find(x=>x.id===state.docId);
+        if(d) parts.push(d.shortTitle);
+      } else if(state.categoryGroup){
+        parts.push(categoryLabel(state.categoryGroup));
+      }
+    }
+    return parts;
+  }
+
+  function scopedSearchPool(){
+    if(state.view === 'review'){
+      let pool = HIGHLIGHTS;
+      if(state.reviewCategory) pool = pool.filter(s=>s.reviewTag===state.reviewCategory);
+      if(state.reviewGroup) pool = pool.filter(s=>effectiveCategoryKey(s.docCategory)===state.reviewGroup);
+      return pool;
+    }
+    let pool = ALL;
+    if(state.docId){
+      pool = pool.filter(s=>s.docId===state.docId);
+    } else if(state.categoryGroup){
+      const idsInGroup = new Set(DOCS.filter(d=>effectiveCategoryKey(d.category)===state.categoryGroup).map(d=>d.id));
+      pool = pool.filter(s=>idsInGroup.has(s.docId));
+    }
+    return pool;
+  }
+
+  function matchQuery(pool, q){
+    return pool.filter(s=>{
+      return textMatchesQuery(s.heading, q) || textMatchesQuery(s.content, q) || textMatchesQuery(s.breadcrumb||'', q) || textMatchesQuery(s.docTitle, q);
+    });
+  }
+
+  function renderSearch(main){
+    const q = state.query.trim();
+    const scopeParts = currentScopeLabel();
+    const hasScope = scopeParts.length > 0;
+    const useFullPool = state.searchIgnoreScope || !hasScope;
+
+    const pool = useFullPool ? ALL : scopedSearchPool();
+    let results = matchQuery(pool, q);
+
+    // If narrowed to nothing but a wider pool would find matches, offer to widen.
+    let widerCount = null;
+    if(results.length === 0 && !useFullPool){
+      widerCount = matchQuery(ALL, q).length;
+    }
+
+    const markCounter = {n: 0};
+    const cardsHtml = results.map(s => renderCard(Object.assign({}, s, {}), {query:q, markCounter})).join('');
+    searchResultsCount = markCounter.n;
+    if(state.searchIndex >= searchResultsCount) state.searchIndex = 0;
+    if(state.searchIndex < 0) state.searchIndex = 0;
+
+    const navBtns = document.getElementById('searchNavBtns');
+    navBtns.style.display = searchResultsCount ? 'flex' : 'none';
+
+    const scopeSuffix = (!useFullPool && hasScope) ? `（${scopeParts.map(esc).join('・')}）` : '';
+    let html = `<div class="meta-row">
+      <div class="meta-title">搜尋「${esc(q)}」${scopeSuffix}</div>
+      <div class="meta-count">找到 ${searchResultsCount} 筆</div>
+    </div>`;
+    if(results.length){
+      html += cardsHtml;
+    } else if(widerCount){
+      html += emptyState(`在目前範圍內查無符合的內容`);
+      html += `<div class="search-widen"><button id="searchWidenBtn" class="btn">改在全部內容中搜尋「${esc(q)}」（共 ${widerCount} 筆）</button></div>`;
+    } else {
+      html += emptyState('查無符合的條文或說明，換個關鍵字試試');
+    }
+    main.innerHTML = html;
+
+    const widenBtn = document.getElementById('searchWidenBtn');
+    if(widenBtn) widenBtn.addEventListener('click', ()=>{
+      state.searchIgnoreScope = true;
+      state.searchIndex = 0;
+      render();
+    });
+
+    if(searchResultsCount) scrollToSearchIndex(true);
+  }
+
+  let searchResultsCount = 0;
+
+  function navigateSearch(dir){
+    if(!searchResultsCount) return;
+    state.searchIndex = (state.searchIndex + dir + searchResultsCount) % searchResultsCount;
+    scrollToSearchIndex(false);
+  }
+
+  function scrollToSearchIndex(skipScroll){
+    const el = document.querySelector(`#main mark[data-smi="${state.searchIndex}"]`);
+    if(el) el.scrollIntoView({behavior: skipScroll ? 'auto' : 'smooth', block:'center'});
+  }
+
+  function emptyState(msg){
+    return `<div class="empty-state"><div class="glyph">卷</div><div>${esc(msg)}</div></div>`;
+  }
+
+  function renderReview(main){
+    let pool = HIGHLIGHTS;
+    if(state.reviewCategory) pool = pool.filter(s=>s.reviewTag===state.reviewCategory);
+    if(state.reviewGroup) pool = pool.filter(s=>effectiveCategoryKey(s.docCategory)===state.reviewGroup);
+
+    const groups = allCategories();
+
+    let html = '';
+    if(groups.length){
+      html += `<div class="review-toolbar">
+        <span class="review-toolbar-label">分類：</span>
+        <button class="tag-chip ${!state.reviewGroup?'on':''}" data-group="">全部</button>
+        ${groups.map(g=>`<button class="tag-chip ${state.reviewGroup===g?'on':''}" data-group="${esc(g)}">${esc(categoryLabel(g))}</button>`).join('')}
+      </div>`;
+    }
+    html += `<div class="review-toolbar">
+      <span class="review-toolbar-label">內容：</span>
+      <button class="tag-chip ${!state.reviewCategory?'on':''}" data-tag="">全部</button>
+      ${REVIEW_TAGS.map(t=>`<button class="tag-chip ${state.reviewCategory===t.key?'on':''}" data-tag="${t.key}">${esc(t.label)}</button>`).join('')}
+      <span class="meta-count">共 ${pool.length} 個重點</span>
+    </div>`;
+
+    main.innerHTML = html;
+
+    main.querySelectorAll('[data-tag]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        state.reviewCategory = btn.dataset.tag || null;
+        render();
+      });
+    });
+    main.querySelectorAll('[data-group]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        state.reviewGroup = btn.dataset.group || null;
+        render();
+      });
+    });
+
+    const body = document.createElement('div');
+    if(pool.length===0){ body.innerHTML = emptyState('此分類尚無標記重點'); }
+    else { body.innerHTML = pool.map(s=>renderCard(s)).join(''); }
+    main.appendChild(body);
+  }
+
+  function markWrongIdeas(){
+    document.querySelectorAll('#main .card-body').forEach(container=>{
+      container.querySelectorAll('p, li').forEach(node=>{
+        const t = node.textContent.trim();
+        const m = t.match(/^錯誤觀念[:：]?\s*([\s\S]*)$/);
+        if(m){
+          let target = node;
+          const parent = node.parentElement;
+          if(parent && parent.tagName==='BLOCKQUOTE' && parent.children.length===1){
+            target = parent;
+          }
+          target.classList.add('wrong-idea');
+          if(!m[1]){
+            const sib = target.nextElementSibling;
+            if(sib) sib.classList.add('wrong-idea');
+          }
+        }
+      });
+    });
+  }
+
+  // ============ User highlighting (mark & remember) ============
+  function applyUserHighlights(){
+    if(!USER_HIGHLIGHTS.length) return;
+    document.querySelectorAll('#main .card-body[data-sec-id]').forEach(container=>{
+      const secId = container.dataset.secId;
+      const hlList = USER_HIGHLIGHTS.filter(h=>h.sectionId===secId);
+      // Apply in stored order; each application walks fresh text nodes so
+      // earlier marks in the same container are respected/skipped correctly.
+      hlList.forEach(h=>applyOneHighlight(container, h));
+    });
+  }
+
+  function collectTextNodes(container){
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+      acceptNode(node){
+        if(node.parentElement && node.parentElement.closest('mark.user-hl')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = [];
+    let n;
+    while((n = walker.nextNode())) nodes.push(n);
+    return nodes;
+  }
+
+  function applyOneHighlight(container, hl){
+    if(container.querySelector(`mark.user-hl[data-hl-id="${hl.id}"]`)) return true; // already applied
+    const textNodes = collectTextNodes(container);
+    let fullText = '';
+    const bounds = [];
+    textNodes.forEach(node=>{
+      const start = fullText.length;
+      fullText += node.textContent;
+      bounds.push({node, start, end: fullText.length});
+    });
+    let searchFrom = 0, foundIndex = -1, count = 0;
+    while(true){
+      const idx = fullText.indexOf(hl.text, searchFrom);
+      if(idx === -1) break;
+      if(count === hl.occurrenceIndex){ foundIndex = idx; break; }
+      count++;
+      searchFrom = idx + 1;
+    }
+    if(foundIndex === -1) return false; // text no longer present (doc edited/removed)
+    const endIndex = foundIndex + hl.text.length;
+    const range = document.createRange();
+    let startSet = false, endSet = false;
+    for(const b of bounds){
+      if(!startSet && foundIndex >= b.start && foundIndex <= b.end){
+        range.setStart(b.node, foundIndex - b.start);
+        startSet = true;
+      }
+      if(!endSet && endIndex >= b.start && endIndex <= b.end){
+        range.setEnd(b.node, endIndex - b.start);
+        endSet = true;
+      }
+      if(startSet && endSet) break;
+    }
+    if(!startSet || !endSet) return false;
+    const mark = document.createElement('mark');
+    mark.className = 'user-hl';
+    mark.dataset.hlId = hl.id;
+    mark.dataset.color = hl.color;
+    mark.style.background = hlColorHex(hl.color);
+    try{
+      range.surroundContents(mark);
+    }catch(e){
+      try{
+        const frag = range.extractContents();
+        mark.appendChild(frag);
+        range.insertNode(mark);
+      }catch(e2){ return false; }
+    }
+    return true;
+  }
+
+  function computeOccurrenceIndex(container, range, text){
+    const preRange = document.createRange();
+    preRange.selectNodeContents(container);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    const prefix = preRange.toString();
+    let count = 0, idx = 0;
+    while(true){
+      const found = prefix.indexOf(text, idx);
+      if(found === -1) break;
+      count++;
+      idx = found + 1;
+    }
+    return count;
+  }
+
+  function addHighlight(container, range, color){
+    const text = range.toString();
+    if(!text || !text.trim()) return;
+    const secId = container.dataset.secId;
+    const occurrenceIndex = computeOccurrenceIndex(container, range, text);
+    const hl = {
+      id: 'hl'+Date.now()+Math.random().toString(36).slice(2,7),
+      docId: (ALL.find(s=>s.id===secId)||{}).docId || null,
+      sectionId: secId,
+      text: text,
+      occurrenceIndex: occurrenceIndex,
+      color: color,
+      createdAt: Date.now()
+    };
+    USER_HIGHLIGHTS.push(hl);
+    saveUserHighlights();
+    window.getSelection().removeAllRanges();
+    hideHlToolbar();
+    applyOneHighlight(container, hl);
+    if(window.updateHlStatus) window.updateHlStatus();
+  }
+
+  function removeHighlight(hlId){
+    USER_HIGHLIGHTS = USER_HIGHLIGHTS.filter(h=>h.id!==hlId);
+    saveUserHighlights();
+    document.querySelectorAll(`mark.user-hl[data-hl-id="${hlId}"]`).forEach(el=>{
+      const parent = el.parentNode;
+      while(el.firstChild) parent.insertBefore(el.firstChild, el);
+      parent.removeChild(el);
+      parent.normalize();
+    });
+    if(window.updateHlStatus) window.updateHlStatus();
+  }
+
+  function recolorHighlight(hlId, color){
+    const hl = USER_HIGHLIGHTS.find(h=>h.id===hlId);
+    if(!hl) return;
+    hl.color = color;
+    saveUserHighlights();
+    document.querySelectorAll(`mark.user-hl[data-hl-id="${hlId}"]`).forEach(el=>{
+      el.dataset.color = color;
+      el.style.background = hlColorHex(color);
+    });
+  }
+
+  function render(){
+    const landing = document.getElementById('importLanding');
+    const nav = document.getElementById('catsScroll');
+    const main = document.getElementById('main');
+    const topbar = document.getElementById('topbar');
+    if(DOCS.length === 0){
+      landing.classList.add('show');
+      nav.style.display = 'none';
+      main.style.display = 'none';
+      topbar.style.display = 'none';
+      return;
+    }
+    landing.classList.remove('show');
+    nav.style.display = '';
+    main.style.display = '';
+    topbar.style.display = '';
+    if(!hasAutoSelectedCategory){
+      hasAutoSelectedCategory = true;
+      if(!state.categoryGroup && !state.docId){
+        const firstCat = allCategories()[0];
+        if(firstCat) state.categoryGroup = firstCat;
+      }
+    }
+    renderCats();
+    renderMain();
+    markWrongIdeas();
+    applyUserHighlights();
+  }
+
+  // ---- settings panel open/close ----
+  (function(){
+    const btn = document.getElementById('settingsBtn');
+    const panel = document.getElementById('settingsPanel');
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const open = panel.classList.toggle('open');
+      btn.classList.toggle('open', open);
+    });
+    document.addEventListener('click', (e)=>{
+      if(!panel.contains(e.target) && e.target!==btn){
+        panel.classList.remove('open');
+        btn.classList.remove('open');
+      }
+    });
+  })();
+
+  // ---- mobile category drawer ----
+  function closeMobileNav(){
+    document.getElementById('catsScroll').classList.remove('mobile-open');
+    document.getElementById('navScrim').classList.remove('show');
+  }
+  (function(){
+    const hb = document.getElementById('mobileNavToggle');
+    const nav = document.getElementById('catsScroll');
+    const scrim = document.getElementById('navScrim');
+    hb.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const open = nav.classList.toggle('mobile-open');
+      scrim.classList.toggle('show', open);
+    });
+    scrim.addEventListener('click', closeMobileNav);
+  })();
+
+  // ---- appearance (light/dark) toggle ----
+  (function(){
+    const btn = document.getElementById('themeToggle');
+    const label = document.getElementById('themeToggleLabel');
+    const root = document.documentElement;
+    let dark;
+    try{
+      const saved = localStorage.getItem('sopThemeDark');
+      dark = saved === '1';
+    }catch(e){ dark = false; }
+    function apply(){
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+      btn.classList.toggle('on', dark);
+      label.textContent = dark ? '暗色模式' : '亮色模式';
+    }
+    btn.addEventListener('click', ()=>{
+      dark = !dark;
+      try{ localStorage.setItem('sopThemeDark', dark ? '1' : '0'); }catch(e){}
+      apply();
+    });
+    apply();
+  })();
+
+  // ---- exam-keyword highlight toggle ----
+  (function(){
+    const btn = document.getElementById('examToggle');
+    const label = document.getElementById('examToggleLabel');
+    function apply(){
+      btn.classList.toggle('on', state.examOn);
+      label.textContent = state.examOn
+        ? `已比對 ${EXAM_META.questionCount||0} 題歷屆試題，標出 ${EXAM_META.keywordCount||0} 個重疊字詞`
+        : '已關閉，不標示題庫重疊字詞';
+    }
+    btn.addEventListener('click', ()=>{ state.examOn = !state.examOn; apply(); render(); });
+    apply();
+  })();
+
+  // ---- text scale control (default 100% = 18px) ----
+  (function(){
+    const MIN=0.75, MAX=1.6, STEP=0.1;
+    let scale = 1;
+    const root = document.documentElement;
+    const label = document.getElementById('scaleLabel');
+    const btnDown = document.getElementById('scaleDown');
+    const btnUp = document.getElementById('scaleUp');
+    function apply(){
+      root.style.setProperty('--content-scale', scale.toFixed(2));
+      label.textContent = Math.round(scale*100)+'%';
+      btnDown.disabled = scale<=MIN+1e-9;
+      btnUp.disabled = scale>=MAX-1e-9;
+    }
+    btnDown.addEventListener('click', (e)=>{ e.stopPropagation(); scale = Math.max(MIN, +(scale-STEP).toFixed(2)); apply(); });
+    btnUp.addEventListener('click', (e)=>{ e.stopPropagation(); scale = Math.min(MAX, +(scale+STEP).toFixed(2)); apply(); });
+    label.addEventListener('dblclick', ()=>{ scale = 1; apply(); });
+    apply();
+  })();
+
+  // ---- md/zip file import ----
+  (function(){
+    const input = document.getElementById('mdFileInput');
+    const clearBtn = document.getElementById('clearImportBtn');
+    input.addEventListener('change', async (e)=>{
+      if(e.target.files && e.target.files.length){
+        await handleFilesImport(e.target.files);
+      }
+      e.target.value = ''; // allow re-selecting the same file later
+    });
+    clearBtn.addEventListener('click', (e)=>{ e.stopPropagation(); clearImports(); });
+    updateImportStatus();
+  })();
+
+  // ---- landing screen import (first-run empty framework state) ----
+  (function(){
+    const input = document.getElementById('landingFileInput');
+    const status = document.getElementById('landingStatus');
+    input.addEventListener('change', async (e)=>{
+      if(e.target.files && e.target.files.length){
+        status.textContent = '匯入中，請稍候…';
+        try{
+          await handleFilesImport(e.target.files);
+        }catch(err){
+          status.textContent = '匯入失敗，請確認檔案格式（.md 或 .zip）後再試一次。';
+          e.target.value = '';
+          return;
+        }
+      }
+      e.target.value = '';
+    });
+  })();
+
+  // ---- user highlighting: selection toolbar ----
+  (function(){
+    const toolbar = document.getElementById('hlToolbar');
+    let activeContainer = null, activeRange = null;
+
+    function hideToolbar(){
+      toolbar.style.display = 'none';
+      activeContainer = null; activeRange = null;
+    }
+    window.hideHlToolbar = hideToolbar;
+
+    document.addEventListener('mouseup', (e)=>{
+      if(toolbar.contains(e.target)) return;
+      setTimeout(()=>{
+        const sel = window.getSelection();
+        if(!sel || sel.isCollapsed || sel.rangeCount===0){ hideToolbar(); return; }
+        const range = sel.getRangeAt(0);
+        const text = range.toString();
+        if(!text.trim()){ hideToolbar(); return; }
+        const startEl = range.startContainer.nodeType===1 ? range.startContainer : range.startContainer.parentElement;
+        const endEl = range.endContainer.nodeType===1 ? range.endContainer : range.endContainer.parentElement;
+        const startBody = startEl && startEl.closest('.card-body[data-sec-id]');
+        const endBody = endEl && endEl.closest('.card-body[data-sec-id]');
+        if(!startBody || startBody !== endBody){ hideToolbar(); return; }
+        activeContainer = startBody;
+        activeRange = range.cloneRange();
+        const r = range.getBoundingClientRect();
+        toolbar.style.display = 'flex';
+        const tw = toolbar.offsetWidth || 180;
+        let left = r.left + r.width/2 - tw/2;
+        left = Math.max(8, Math.min(left, window.innerWidth - tw - 8));
+        toolbar.style.left = left + 'px';
+        toolbar.style.top = Math.max(8, r.top - 46) + 'px';
+      }, 0);
+    });
+
+    toolbar.querySelectorAll('.hl-swatch').forEach(btn=>{
+      btn.addEventListener('mousedown', (e)=>{ e.preventDefault(); }); // keep selection alive until click fires
+      btn.addEventListener('click', ()=>{
+        if(activeContainer && activeRange) addHighlight(activeContainer, activeRange, btn.dataset.color);
+      });
+    });
+
+    document.addEventListener('mousedown', (e)=>{
+      if(!toolbar.contains(e.target)) hideToolbar();
+    });
+    window.addEventListener('scroll', hideToolbar, true);
+  })();
+
+  // ---- user highlighting: click-to-edit popover ----
+  (function(){
+    const pop = document.getElementById('hlPopover');
+    const deleteBtn = document.getElementById('hlPopoverDelete');
+    let activeId = null;
+
+    function hidePopover(){
+      pop.style.display = 'none';
+      activeId = null;
+    }
+
+    document.addEventListener('click', (e)=>{
+      const mark = e.target.closest('mark.user-hl');
+      if(mark){
+        activeId = mark.dataset.hlId;
+        const r = mark.getBoundingClientRect();
+        pop.style.display = 'flex';
+        const pw = pop.offsetWidth || 220;
+        let left = r.left + r.width/2 - pw/2;
+        left = Math.max(8, Math.min(left, window.innerWidth - pw - 8));
+        pop.style.left = left + 'px';
+        pop.style.top = Math.max(8, r.top - 46) + 'px';
+        e.stopPropagation();
+        return;
+      }
+      if(!pop.contains(e.target)) hidePopover();
+    });
+
+    pop.querySelectorAll('.hl-swatch').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(activeId) recolorHighlight(activeId, btn.dataset.color);
+        hidePopover();
+      });
+    });
+
+    deleteBtn.addEventListener('click', ()=>{
+      if(activeId) removeHighlight(activeId);
+      hidePopover();
+    });
+
+    window.addEventListener('scroll', hidePopover, true);
+  })();
+
+  // ---- highlight export / import / clear-all ----
+  (function(){
+    function updateHlStatus(){
+      const status = document.getElementById('hlCountStatus');
+      const clearBtn = document.getElementById('hlClearBtn');
+      if(USER_HIGHLIGHTS.length){
+        status.textContent = `已標記 ${USER_HIGHLIGHTS.length} 處`;
+        clearBtn.style.display = '';
+      } else {
+        status.textContent = '尚未標記任何內容';
+        clearBtn.style.display = 'none';
+      }
+    }
+    updateHlStatus();
+    window.updateHlStatus = updateHlStatus;
+
+    document.getElementById('hlExportBtn').addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify({highlights: USER_HIGHLIGHTS}, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'sop-highlights.json';
+      document.body.appendChild(a);
+      a.dispatchEvent(new MouseEvent('click', {bubbles:false}));
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    });
+
+    document.getElementById('hlImportInput').addEventListener('change', async (e)=>{
+      const file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if(!file) return;
+      try{
+        const text = await file.text();
+        const data = JSON.parse(text);
+        const incoming = Array.isArray(data) ? data : (data.highlights || []);
+        const existingIds = new Set(USER_HIGHLIGHTS.map(h=>h.id));
+        let added = 0;
+        incoming.forEach(h=>{
+          if(h && h.id && h.sectionId && h.text && h.color && !existingIds.has(h.id)){
+            USER_HIGHLIGHTS.push(h);
+            existingIds.add(h.id);
+            added++;
+          }
+        });
+        saveUserHighlights();
+        updateHlStatus();
+        render();
+        document.getElementById('hlCountStatus').textContent = `已匯入 ${added} 筆標記（共 ${USER_HIGHLIGHTS.length} 處）`;
+      }catch(err){
+        document.getElementById('hlCountStatus').textContent = '匯入失敗，請確認是先前匯出的標記檔案';
+      }
+    });
+
+    document.getElementById('hlClearBtn').addEventListener('click', ()=>{
+      USER_HIGHLIGHTS = [];
+      saveUserHighlights();
+      updateHlStatus();
+      render();
+    });
+  })();
+  const searchClear = document.getElementById('searchClear');
+  document.getElementById('searchPrev').addEventListener('click', ()=>navigateSearch(-1));
+  document.getElementById('searchNext').addEventListener('click', ()=>navigateSearch(1));
+  let debounceT;
+  searchInput.addEventListener('input', (e)=>{
+    clearTimeout(debounceT);
+    const v = e.target.value;
+    debounceT = setTimeout(()=>{
+      state.query = v;
+      state.searchIndex = 0;
+      state.searchIgnoreScope = false;
+      searchClear.style.display = v ? 'block' : 'none';
+      render();
+    }, 120);
+  });
+  searchInput.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      clearTimeout(debounceT);
+      const v = searchInput.value;
+      if(state.query !== v){
+        state.query = v;
+        state.searchIndex = 0;
+        state.searchIgnoreScope = false;
+        searchClear.style.display = v ? 'block' : 'none';
+        render();
+      } else {
+        navigateSearch(1);
+      }
+    }
+  });
+  searchClear.addEventListener('click', ()=>{
+    searchInput.value=''; state.query=''; searchClear.style.display='none'; render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
