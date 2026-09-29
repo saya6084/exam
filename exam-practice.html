@@ -368,7 +368,8 @@ var STATE = {
   setup: {
     types: { Single:true, Multi:true },
     randomOrder: false,
-    randomOptions: false
+    randomOptions: false,
+    showAllAnswers: false
   },
   quiz: null,
   reviewQuiz: null,
@@ -1055,6 +1056,7 @@ function renderSetupScreen(){
   h += '<div class="card">';
   h += '<div class="checkline" style="margin-top:0;"><input type="checkbox" id="randomOrderChk" '+(STATE.setup.randomOrder?'checked':'')+'><span>隨機出題順序</span></div>';
   h += '<div class="checkline"><input type="checkbox" id="randomOptionsChk" '+(STATE.setup.randomOptions?'checked':'')+'><span>隨機選項順序</span></div>';
+  h += '<div class="checkline"><input type="checkbox" id="showAnswersChk" '+(STATE.setup.showAllAnswers?'checked':'')+'><span>顯示全部答案</span></div>';
   h += '</div>';
 
   // question count hint (practice mode always uses all filtered questions)
@@ -1130,6 +1132,7 @@ function renderQuizScreen(){
 
   if (q.type==='Multi' && !submitted) h += '<div class="multi-hint">本題為複選題，請選出所有正確選項</div>';
 
+  var revealAnswers = STATE.setup.showAllAnswers;
   q.options.forEach(function(o,i){
     var cls = 'option-row';
     var mark = String.fromCharCode(65+i);
@@ -1137,12 +1140,19 @@ function renderQuizScreen(){
     if (submitted){
       if (o.answer) cls += ' correct';
       else if (isSel) cls += ' wrong';
-    } else if (isSel){
-      cls += ' selected';
+    } else {
+      if (isSel) cls += ' selected';
+      if (revealAnswers && o.answer) cls += ' correct';
     }
     var inputType = q.type==='Multi' ? 'checkbox' : 'radio';
+    var markChar = mark;
+    if (submitted){
+      markChar = o.answer ? '✔' : (isSel ? '✕' : mark);
+    } else if (revealAnswers && o.answer){
+      markChar = '✔';
+    }
     h += '<div class="'+cls+'" data-act="pick-option" data-idx="'+i+'">';
-    h += '<span class="mark">'+(submitted && o.answer ? '✔' : (submitted && isSel ? '✕' : mark))+'</span>';
+    h += '<span class="mark">'+markChar+'</span>';
     h += '<span style="font-size:'+(16*STATE.textScale)+'px;white-space:pre-line;">'+escapeHtml(o.option)+'</span>';
     h += '</div>';
   });
@@ -1252,6 +1262,8 @@ function bindEvents(){
   if (randomOrderChk) randomOrderChk.addEventListener('change', function(){ STATE.setup.randomOrder = randomOrderChk.checked; });
   var randomOptionsChk = document.getElementById('randomOptionsChk');
   if (randomOptionsChk) randomOptionsChk.addEventListener('change', function(){ STATE.setup.randomOptions = randomOptionsChk.checked; });
+  var showAnswersChk = document.getElementById('showAnswersChk');
+  if (showAnswersChk) showAnswersChk.addEventListener('change', function(){ STATE.setup.showAllAnswers = showAnswersChk.checked; });
 }
 
 function handleAction(act, node){
