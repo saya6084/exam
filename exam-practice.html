@@ -234,6 +234,14 @@ input[type=file]{display:none;}
 .preset-btns{display:flex;gap:8px;}
 .preset-btn{flex:1;text-align:center;padding:8px 0;border:1.5px solid var(--line);border-radius:8px;font-size:14px;color:var(--ink-soft);cursor:pointer;background:var(--surface);}
 .preset-btn.active{border-color:var(--brass);color:var(--navy-deep);font-weight:700;background:var(--brass-light);}
+.bank-strip{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:9px 2px;margin-bottom:16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:13px;}
+.bank-strip .bs-name{flex:1 1 140px;min-width:0;font-weight:600;color:var(--navy-deep);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bank-strip .bs-count{color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:12px;white-space:nowrap;}
+.bank-strip .bs-links{display:flex;align-items:center;gap:4px;white-space:nowrap;margin-left:auto;}
+.bank-strip .bs-links a{color:var(--navy);text-decoration:underline;cursor:pointer;padding:2px 4px;}
+.bank-strip .bs-links a.dis{color:var(--ink-soft);opacity:.5;text-decoration:none;cursor:not-allowed;}
+.bank-strip .bs-links a.del{color:var(--stamp-red);}
+.bank-strip .bs-links i{color:var(--line);font-style:normal;}
 .mode-grid{display:flex;flex-direction:column;gap:14px;margin-top:6px;}
 .mode-card{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:22px 20px;cursor:pointer;}
 .mode-card:hover{border-color:var(--brass);}
@@ -842,15 +850,14 @@ function renderHomeScreen(){
   if (STATE.importMessage && STATE.importIsError){
     h += '<div class="msg-banner error">'+STATE.importMessage+'</div>';
   }
-  // always show which bank is loaded (stays until the bank is cleared)
-  var names = STATE.bankSources.length ? STATE.bankSources.map(function(n){ return '「'+escapeHtml(n)+'」'; }).join('、') : '已儲存的題庫';
-  h += '<div class="msg-banner">已載入題庫：'+names+'（共 '+ALL.length+' 題）</div>';
-  // bank management card
-  h += '<div class="card"><div class="bank-summary">';
-  h += '<div class="count">'+ALL.length+'<span>題（'+CLASS_ORDER.length+' 個科目）</span></div>';
-  h += '<div class="btn-row" style="margin-top:0;"><button class="btn secondary" data-act="go-import">匯入題庫檔案</button><button class="btn ghost" data-act="clear-bank">清除全部題庫</button></div>';
-  h += '</div></div>';
-
+  // compact bank strip: loaded file name(s), counts, 匯入／清除 as text links
+  var nameList = STATE.bankSources.length ? STATE.bankSources.join('、') : '已儲存的題庫';
+  h += '<div class="bank-strip"><span class="bs-ic">📚</span>';
+  h += '<span class="bs-name" title="'+escapeHtml(nameList)+'">'+escapeHtml(nameList)+'</span>';
+  h += '<span class="bs-count">'+ALL.length+' 題 · '+CLASS_ORDER.length+' 科目</span>';
+  h += '<span class="bs-links">';
+  h += (ALL.length>0 ? '<a class="dis" title="已載入題庫，需先清除才能再匯入">匯入</a>' : '<a data-act="go-import">匯入</a>');
+  h += '<i>|</i><a class="del" data-act="clear-bank">清除</a></span></div>';
   h += '<div class="mode-grid">';
   h += '<div class="mode-card" data-act="open-practice"><div class="mode-title">練習題目</div>';
   h += '<div class="mode-desc">自選科目與題型，作答後立即顯示對錯與解釋；包含錯題複習。</div>';
