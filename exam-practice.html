@@ -227,6 +227,19 @@ input[type=file]{display:none;}
 .zoom-btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;width:24px;height:24px;cursor:pointer;font-size:13px;line-height:1;}
 .flag-btn{border:none;background:none;font-size:18px;cursor:pointer;color:var(--brass);}
 .timer{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--navy-deep);}
+.exam-timer{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:15px;text-align:center;color:var(--navy-deep);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:12px;}
+.exam-timer.warn{color:var(--stamp-red);border-color:var(--stamp-red);}
+.field-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;color:var(--ink);}
+.field-row input{width:90px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-soft);color:var(--ink);font-size:15px;text-align:center;font-family:inherit;}
+.preset-btns{display:flex;gap:8px;}
+.preset-btn{flex:1;text-align:center;padding:8px 0;border:1.5px solid var(--line);border-radius:8px;font-size:14px;color:var(--ink-soft);cursor:pointer;background:var(--surface);}
+.preset-btn.active{border-color:var(--brass);color:var(--navy-deep);font-weight:700;background:var(--brass-light);}
+.mode-grid{display:flex;flex-direction:column;gap:14px;margin-top:6px;}
+.mode-card{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:22px 20px;cursor:pointer;}
+.mode-card:hover{border-color:var(--brass);}
+.mode-title{font-size:19px;font-weight:700;color:var(--navy-deep);margin-bottom:6px;}
+.mode-desc{font-size:13px;color:var(--ink-soft);line-height:1.7;}
+.mode-meta{margin-top:10px;font-size:12px;color:var(--brass);font-weight:600;}
 .progress-bar-track{height:6px;background:#eee0c4;border-radius:4px;overflow:hidden;margin-bottom:16px;}
 .jump-open-btn{
   background:var(--surface-soft);border:1px solid var(--brass);color:var(--navy-deep);
@@ -267,6 +280,7 @@ input[type=file]{display:none;}
 .option-row.wrong{border-color:var(--stamp-red);background:var(--wrong-bg);}
 .option-row.wrong .mark{background:var(--stamp-red);border-color:var(--stamp-red);}
 .option-row.selected:not(.correct):not(.wrong){border-color:var(--navy);}
+.option-row.selected:not(.correct):not(.wrong) .mark{background:var(--navy);border-color:var(--navy);}
 .option-row input{margin-top:3px;accent-color:var(--navy);width:16px;height:16px;flex:0 0 auto;}
 .remark-box{
   background:var(--remark-bg);border:1px solid var(--brass);border-radius:8px;padding:10px 14px;
@@ -353,6 +367,10 @@ var BANK_KEY = 'examprep-bank-v1';
 var PROGRESS_KEY = 'examprep-progress-v1';
 var SESSION_KEY = 'examprep-session-v1';
 var REVIEW_SESSION_KEY = 'examprep-review-session-v1';
+var EXAM_SESSION_KEY = 'examprep-exam-session-v1';
+var LASTKIND_KEY = 'examprep-lastkind-v1';
+var EXAMTIME_KEY = 'examprep-examtime-v1';
+var BANKSRC_KEY = 'examprep-banksources-v1';
 var DARKMODE_KEY = 'examprep-darkmode-v1';
 var SETUP_DONE_KEY = 'examprep-setup-done-v1';
 
@@ -363,7 +381,7 @@ var CLASS_COUNTS = {};
 var BY_ID = {};
 
 var STATE = {
-  screen: 'import', // import | setup | quiz | results
+  screen: 'import', // import | home | setup (練習題目) | examsetup (模擬測驗) | quiz | results
   selectedClasses: {},
   setup: {
     types: { Single:true, Multi:true },
@@ -373,10 +391,15 @@ var STATE = {
   },
   quiz: null,
   reviewQuiz: null,
-  quizKind: 'practice', // which slot the quiz screen is currently showing: 'practice' | 'review'
+  examQuiz: null,
+  bankSources: [], // names of the files the current bank was imported from
+  examTimeLimit: 60, // minutes, chosen before starting a 測驗
+  quizKind: 'practice', // which slot the quiz screen is currently showing: 'practice' | 'review' | 'exam'
   wrongBank: [],
   seenBank: [],
-  cumulative: { answered:0, correct:0 },
+  cumulative: { answered:0, correct:0 },       // 練習
+  reviewStats: { answered:0, correct:0 },      // 複習錯題
+  examStats: { answered:0, correct:0 },        // 測驗
   textScale: 1,
   importMessage: '',
   importIsError: false,
@@ -530,7 +553,9 @@ function finishImport(items, fileName){
   var added = ALL.length - before;
   STATE.importMessage = '已從「'+escapeHtml(fileName)+'」匯入 '+items.length+' 題（新增 '+added+' 題，題庫共 '+ALL.length+' 題）';
   STATE.importIsError = false;
-  STATE.screen = 'setup';
+  if (STATE.bankSources.indexOf(fileName)<0) STATE.bankSources.push(fileName);
+  Store.set(BANKSRC_KEY, JSON.stringify(STATE.bankSources), false);
+  STATE.screen = 'home';
   persistBank();
   render();
 }
@@ -580,14 +605,21 @@ function clearBank(){
   STATE.wrongBank = [];
   STATE.seenBank = [];
   STATE.cumulative = { answered:0, correct:0 };
+  STATE.reviewStats = { answered:0, correct:0 };
+  STATE.examStats = { answered:0, correct:0 };
   STATE.quiz = null;
   STATE.reviewQuiz = null;
+  STATE.examQuiz = null;
   STATE.setupConfigured = false;
   STATE.showFullSetup = false;
   Store.set(BANK_KEY, JSON.stringify(ALL), false);
-  Store.set(PROGRESS_KEY, JSON.stringify({wrongBank:[],seenBank:[],cumulative:STATE.cumulative}), false);
+  saveProgress();
   Store.set(SESSION_KEY, '', false);
   Store.set(REVIEW_SESSION_KEY, '', false);
+  Store.set(EXAM_SESSION_KEY, '', false);
+  Store.set(LASTKIND_KEY, '', false);
+  STATE.bankSources = [];
+  Store.set(BANKSRC_KEY, '', false);
   Store.set(SETUP_DONE_KEY, '', false);
   STATE.screen = 'import';
   STATE.importMessage = '';
@@ -596,7 +628,7 @@ function clearBank(){
 
 /* ---------- progress / session persistence ---------- */
 function saveProgress(){
-  Store.set(PROGRESS_KEY, JSON.stringify({ wrongBank: STATE.wrongBank, seenBank: STATE.seenBank, cumulative: STATE.cumulative }), false);
+  Store.set(PROGRESS_KEY, JSON.stringify({ wrongBank: STATE.wrongBank, seenBank: STATE.seenBank, cumulative: STATE.cumulative, reviewStats: STATE.reviewStats, examStats: STATE.examStats }), false);
 }
 function loadProgress(){
   return Store.get(PROGRESS_KEY, false).then(function(raw){
@@ -605,22 +637,44 @@ function loadProgress(){
       var p = JSON.parse(raw);
       STATE.wrongBank = (p.wrongBank||[]).filter(function(id){ return id in BY_ID; });
       STATE.seenBank = (p.seenBank||[]).filter(function(id){ return id in BY_ID; });
-      STATE.cumulative = p.cumulative || { answered:0, correct:0 };
+      applyStatsFrom(p);
     } catch(e){}
   });
 }
+var KIND_LABEL = { practice:'練習', review:'複習錯題', exam:'測驗' };
+var KIND_SESSION_KEY = { practice:SESSION_KEY, review:REVIEW_SESSION_KEY, exam:EXAM_SESSION_KEY };
+function emptyStats(){ return { answered:0, correct:0 }; }
+function applyStatsFrom(p){
+  STATE.cumulative = p.cumulative || emptyStats();
+  STATE.reviewStats = p.reviewStats || emptyStats();
+  STATE.examStats = p.examStats || emptyStats();
+}
+function statsOf(kind){
+  return kind==='review' ? STATE.reviewStats : (kind==='exam' ? STATE.examStats : STATE.cumulative);
+}
+function getQuizSlot(kind){
+  return kind==='review' ? STATE.reviewQuiz : (kind==='exam' ? STATE.examQuiz : STATE.quiz);
+}
+function setQuizSlot(kind, quiz){
+  if (kind==='review') STATE.reviewQuiz = quiz;
+  else if (kind==='exam') STATE.examQuiz = quiz;
+  else STATE.quiz = quiz;
+}
+function hasPaused(kind){
+  var q = getQuizSlot(kind);
+  return !!(q && q.questions && q.questions.length);
+}
 function saveSession(){
   if (STATE.screen!=='quiz') return;
-  if (STATE.quizKind==='review'){
-    if (STATE.reviewQuiz) Store.set(REVIEW_SESSION_KEY, JSON.stringify(STATE.reviewQuiz), false);
-  } else {
-    if (STATE.quiz) Store.set(SESSION_KEY, JSON.stringify(STATE.quiz), false);
+  var q = getQuizSlot(STATE.quizKind);
+  if (q){
+    Store.set(KIND_SESSION_KEY[STATE.quizKind], JSON.stringify(q), false);
+    Store.set(LASTKIND_KEY, STATE.quizKind, false);
   }
 }
-function clearSession(){ Store.set(SESSION_KEY, '', false); }
-function clearReviewSession(){ Store.set(REVIEW_SESSION_KEY, '', false); }
+function clearSessionOf(kind){ Store.set(KIND_SESSION_KEY[kind], '', false); }
 function activeQuiz(){
-  return STATE.quizKind==='review' ? STATE.reviewQuiz : STATE.quiz;
+  return getQuizSlot(STATE.quizKind);
 }
 
 /* ---------- helpers ---------- */
@@ -679,6 +733,174 @@ function startQuiz(){
   render();
 }
 
+/* ---------- mock exam: proportional sampling ---------- */
+var MOCK_TOTAL = 70;
+var MOCK_MULTI_RATIO = 0.2;
+
+function allocateLargestRemainder(weights, total){
+  var keys = Object.keys(weights);
+  var sum = keys.reduce(function(a,k){ return a+weights[k]; }, 0);
+  var out = {}, rems = [], used = 0;
+  keys.forEach(function(k){
+    var raw = sum>0 ? weights[k]*total/sum : 0;
+    out[k] = Math.floor(raw);
+    used += out[k];
+    rems.push({k:k, r:raw-out[k]});
+  });
+  rems.sort(function(a,b){ return b.r-a.r; });
+  for (var i=0; i<total-used && i<rems.length; i++) out[rems[i].k]++;
+  return out;
+}
+
+// returns {total, plan:[{cls, n, multi, single}]} or null if the bank is empty
+function mockPlan(){
+  if (!ALL.length) return null;
+  var counts = {}, multiAvail = {};
+  ALL.forEach(function(q){
+    counts[q.class] = (counts[q.class]||0)+1;
+    if (q.type==='Multi') multiAvail[q.class] = (multiAvail[q.class]||0)+1;
+  });
+  var N = Math.min(MOCK_TOTAL, ALL.length);
+  var quota = allocateLargestRemainder(counts, N);
+  var multiTarget = Math.round(N*MOCK_MULTI_RATIO);
+  var m = {}, cap = {}, sum = 0;
+  CLASS_ORDER.forEach(function(c){
+    cap[c] = Math.min(quota[c], multiAvail[c]||0);
+    m[c] = Math.min(Math.floor(quota[c]*MOCK_MULTI_RATIO), cap[c]);
+    sum += m[c];
+  });
+  while (sum<multiTarget){
+    var best = null, bestDef = -1;
+    CLASS_ORDER.forEach(function(c){
+      if (m[c]>=cap[c]) return;
+      var def = quota[c]*MOCK_MULTI_RATIO - m[c];
+      if (def>bestDef){ bestDef = def; best = c; }
+    });
+    if (best===null) break;
+    m[best]++; sum++;
+  }
+  var plan = CLASS_ORDER.filter(function(c){ return quota[c]>0; }).map(function(c){
+    return { cls:c, n:quota[c], multi:m[c], single:quota[c]-m[c] };
+  });
+  return { total:N, multi:sum, single:N-sum, plan:plan };
+}
+
+function setExamTime(m){
+  m = Math.max(1, Math.min(300, parseInt(m,10) || 60));
+  STATE.examTimeLimit = m;
+  Store.set(EXAMTIME_KEY, String(m), false);
+}
+
+function startMockQuiz(){
+  var mp = mockPlan();
+  if (!mp) return;
+  var singles = [], multis = [];
+  mp.plan.forEach(function(p){
+    singles = singles.concat(shuffle(ALL.filter(function(q){ return q.class===p.cls && q.type!=='Multi'; })).slice(0, p.single));
+    multis = multis.concat(shuffle(ALL.filter(function(q){ return q.class===p.cls && q.type==='Multi'; })).slice(0, p.multi));
+  });
+  // 單選題在前、複選題在後
+  var chosen = singles.concat(multis).map(function(q){
+    var opts = q.options.map(function(o){ return {option:o.option, answer:o.answer}; });
+    return { id:q.id, class:q.class, sn:q.sn, type:q.type, question:q.question, remark:q.remark, explanation:q.explanation, options:opts };
+  });
+  var limitMin = Math.max(1, Math.min(300, parseInt(STATE.examTimeLimit,10) || 60));
+  STATE.examQuiz = {
+    questions: chosen, index: 0, selections: {}, submitted: {}, recordedIds: [],
+    startedAt: Date.now(), timeLimitSec: limitMin*60
+  };
+  STATE.quizKind = 'exam';
+  STATE.screen = 'quiz';
+  STATE.jumpPanelOpen = false;
+  STATE.jumpSelectedClass = null;
+  saveSession();
+  render();
+}
+
+function examRemainingSec(){
+  var q = STATE.examQuiz;
+  if (!q || !q.timeLimitSec) return 0;
+  return Math.max(0, Math.ceil((q.startedAt + q.timeLimitSec*1000 - Date.now())/1000));
+}
+function examExpired(){
+  var q = STATE.examQuiz;
+  return !!(q && q.timeLimitSec && examRemainingSec()<=0);
+}
+function examAnsweredCount(){
+  var q = STATE.examQuiz;
+  if (!q) return 0;
+  return q.questions.filter(function(x){ var sl = q.selections[x.id]; return sl && sl.length>0; }).length;
+}
+
+function renderHomeScreen(){
+  if (ALL.length===0){
+    return '<div class="empty-state">尚未載入題庫，請先匯入題庫檔案。</div>'+
+      '<div class="btn-row" style="justify-content:center;"><button class="btn brass" data-act="go-import">前往匯入題庫</button></div>';
+  }
+  var practiceBusy = hasPaused('practice') || hasPaused('review');
+  var h = '';
+  if (STATE.importMessage && STATE.importIsError){
+    h += '<div class="msg-banner error">'+STATE.importMessage+'</div>';
+  }
+  // always show which bank is loaded (stays until the bank is cleared)
+  var names = STATE.bankSources.length ? STATE.bankSources.map(function(n){ return '「'+escapeHtml(n)+'」'; }).join('、') : '已儲存的題庫';
+  h += '<div class="msg-banner">已載入題庫：'+names+'（共 '+ALL.length+' 題）</div>';
+  // bank management card
+  h += '<div class="card"><div class="bank-summary">';
+  h += '<div class="count">'+ALL.length+'<span>題（'+CLASS_ORDER.length+' 個科目）</span></div>';
+  h += '<div class="btn-row" style="margin-top:0;"><button class="btn secondary" data-act="go-import">匯入題庫檔案</button><button class="btn ghost" data-act="clear-bank">清除全部題庫</button></div>';
+  h += '</div></div>';
+
+  h += '<div class="mode-grid">';
+  h += '<div class="mode-card" data-act="open-practice"><div class="mode-title">練習題目</div>';
+  h += '<div class="mode-desc">自選科目與題型，作答後立即顯示對錯與解釋；包含錯題複習。</div>';
+  if (practiceBusy) h += '<div class="mode-meta">有進行中的練習／複習</div>';
+  h += '</div>';
+  h += '<div class="mode-card" data-act="open-exam"><div class="mode-title">模擬測驗</div>';
+  h += '<div class="mode-desc">依科目比例抽 '+Math.min(MOCK_TOTAL, ALL.length)+' 題，單選在前、複選在後，限時作答，結束後計分。</div>';
+  if (hasPaused('exam')) h += '<div class="mode-meta">有進行中的測驗</div>';
+  h += '</div></div>';
+  return h;
+}
+
+function renderExamSetupScreen(){
+  var mp = mockPlan();
+  if (!mp){
+    return '<div class="empty-state">尚未載入題庫，請先匯入題庫檔案。</div>'+
+      '<div class="btn-row" style="justify-content:center;"><button class="btn brass" data-act="go-import">前往匯入題庫</button></div>';
+  }
+  var h = '';
+  var paused = hasPaused('exam');
+  if (paused){
+    h += '<div class="wrongbank-callout"><div class="txt">尚有進行中的測驗（已作答 '+examAnsweredCount()+'／'+STATE.examQuiz.questions.length+' 題，剩餘 '+formatTime(examRemainingSec())+'）</div><button class="btn brass" data-act="resume-exam">繼續測驗</button></div>';
+  }
+  var st = STATE.examStats;
+  var a = st.answered>0 ? Math.round(st.correct/st.answered*100) : 0;
+  h += '<div class="stat-line"><span>測驗紀錄：累計已作答 '+st.answered+' 題　正確率 '+a+'%</span><a data-act="reset-progress" data-kind="exam">重置</a></div>';
+
+  h += '<h2 class="section-title">測驗規格</h2><div class="card">';
+  h += '<div style="font-size:13px;color:var(--ink-soft);line-height:1.8;">';
+  h += '共 '+mp.total+' 題：單選 '+mp.single+' 題、複選 '+mp.multi+' 題（約 80%／20%）<br>';
+  h += '各科題數：'+mp.plan.map(function(p){ return escapeHtml(p.cls)+' '+p.n; }).join('　')+'<br>';
+  h += '單選題在前、複選題在後；不可跳題；作答過程不顯示對錯，結束後才計算分數。';
+  h += '</div></div>';
+
+  h += '<h2 class="section-title">作答時間</h2><div class="card">';
+  h += '<div class="field-row"><label>限時（分鐘）</label><input type="number" min="1" max="300" id="examTimeInput" value="'+STATE.examTimeLimit+'"></div>';
+  h += '<div class="preset-btns" style="margin-top:10px;">';
+  [30,60,90,120].forEach(function(m){
+    h += '<div class="preset-btn'+(parseInt(STATE.examTimeLimit,10)===m?' active':'')+'" data-act="set-exam-time" data-min="'+m+'">'+m+'</div>';
+  });
+  h += '</div><div class="hint">時間到會自動結束測驗並計分。</div></div>';
+
+  if (!paused){
+    h += '<div class="start-btn-wrap"><button class="btn brass start-btn" data-act="start-mock">開始測驗（'+mp.total+' 題）</button></div>';
+  } else {
+    h += '<div class="hint" style="margin-top:10px;">尚有進行中的測驗，請先於上方「繼續測驗」。</div>';
+  }
+  return h;
+}
+
 function startWrongReview(){
   var ids = STATE.wrongBank.filter(function(id){ return id in BY_ID; });
   if (ids.length===0) return;
@@ -719,17 +941,16 @@ function gradeAndRecord(q){
   var correctIdx = [];
   q.options.forEach(function(o,i){ if(o.answer) correctIdx.push(i); });
   var isCorrect = sel.length===correctIdx.length && sel.every(function(i){ return correctIdx.indexOf(i)>=0; });
-  if (STATE.quizKind !== 'review'){
-    // only genuine practice-session attempts count toward the overall practice record,
-    // so repeatedly looping through wrong-question review doesn't dilute it
-    STATE.cumulative.answered++;
-    if (isCorrect) STATE.cumulative.correct++;
-  }
+  // 練習／複習錯題／測驗 each keep their own separate statistics
+  var st = statsOf(STATE.quizKind);
+  st.answered++;
+  if (isCorrect) st.correct++;
   var wbIdx = STATE.wrongBank.indexOf(q.id);
   if (!isCorrect && wbIdx<0){
     STATE.wrongBank.push(q.id);
   }
-  if (STATE.seenBank.indexOf(q.id)<0) STATE.seenBank.push(q.id);
+  // the 已練習 record only follows 練習; review / exam attempts don't touch it
+  if (STATE.quizKind==='practice' && STATE.seenBank.indexOf(q.id)<0) STATE.seenBank.push(q.id);
   saveProgress();
 }
 
@@ -738,6 +959,16 @@ function toggleOption(idx){
   if (!q) return;
   var quiz = activeQuiz();
   if (quiz.submitted[q.id]) return;
+  if (STATE.quizKind==='exam'){
+    if (examExpired()){ finishQuiz(true); return; }
+    var cur = quiz.selections[q.id] ? quiz.selections[q.id].slice() : [];
+    if (q.type==='Single'){ cur = [idx]; }
+    else { var pi = cur.indexOf(idx); if (pi>=0) cur.splice(pi,1); else cur.push(idx); }
+    quiz.selections[q.id] = cur;
+    saveSession();
+    render();
+    return;
+  }
   if (q.type==='Single'){
     quiz.selections[q.id] = [idx];
     quiz.submitted[q.id] = true;
@@ -812,7 +1043,7 @@ function confirmJumpTo(){
     closeJumpPanel();
     goToIndex(targetIdx);
   } else {
-    alert(cls+'第 '+n+' 題不在本次測驗範圍內');
+    alert(cls+'第 '+n+' 題不在本次範圍內');
   }
 }
 function goToIndex(i){
@@ -833,13 +1064,14 @@ function isLastAnsweredInPractice(){
   return quiz.index===quiz.questions.length-1 && quiz.submitted[quiz.questions[quiz.index].id];
 }
 
-function finishQuiz(){
+function finishQuiz(timeUp){
   var quiz = activeQuiz();
+  var isExamKind = STATE.quizKind==='exam';
   var graded = quiz.questions.map(function(q){
     var sel = quiz.selections[q.id]||[];
     var correctIdx = [];
     q.options.forEach(function(o,i){ if(o.answer) correctIdx.push(i); });
-    var answered = !!quiz.submitted[q.id];
+    var answered = isExamKind ? sel.length>0 : !!quiz.submitted[q.id];
     var isCorrect = answered && sel.length===correctIdx.length && sel.every(function(i){ return correctIdx.indexOf(i)>=0; });
     return { q:q, answered:answered, correct:isCorrect };
   });
@@ -855,18 +1087,26 @@ function finishQuiz(){
     if (g.correct) byClass[c].correct++;
   });
   var elapsedSec = Math.floor((Date.now()-quiz.startedAt)/1000);
+  if (isExamKind && quiz.timeLimitSec) elapsedSec = Math.min(elapsedSec, quiz.timeLimitSec);
+  if (isExamKind){
+    // 測驗 is graded all at once at the end, into its own separate record
+    graded.forEach(function(g){
+      if (!g.answered) return;
+      STATE.examStats.answered++;
+      if (g.correct) STATE.examStats.correct++;
+      else if (STATE.wrongBank.indexOf(g.q.id)<0) STATE.wrongBank.push(g.q.id);
+    });
+    saveProgress();
+  }
   STATE.results = {
+    kind: STATE.quizKind,
+    timeUp: !!timeUp,
     graded: graded, correctCount: correctCount, answeredCount: answeredCount, total: total,
     newlyWrong: newlyWrong, byClass: byClass, elapsedSec: elapsedSec
   };
   STATE.screen = 'results';
-  if (STATE.quizKind==='review'){
-    STATE.reviewQuiz = null;
-    clearReviewSession();
-  } else {
-    STATE.quiz = null;
-    clearSession();
-  }
+  setQuizSlot(STATE.quizKind, null);
+  clearSessionOf(STATE.quizKind);
   render();
 }
 
@@ -879,8 +1119,9 @@ function retryWrongFromResults(){
     var opts = g.q.options.map(function(o){ return {option:o.option, answer:o.answer}; });
     return { id:g.q.id, class:g.q.class, sn:g.q.sn, type:g.q.type, question:g.q.question, remark:g.q.remark, explanation:g.q.explanation, options:shuffle(opts) };
   });
-  STATE.quiz = { questions:shuffle(qs), index:0, selections:{}, submitted:{}, recordedIds:[], startedAt:Date.now() };
-  STATE.quizKind = 'practice';
+  var kind = STATE.results.kind || 'practice';
+  setQuizSlot(kind, { questions:shuffle(qs), index:0, selections:{}, submitted:{}, recordedIds:[], startedAt:Date.now() });
+  STATE.quizKind = kind;
   STATE.screen = 'quiz';
   STATE.jumpPanelOpen = false;
   STATE.jumpSelectedClass = null;
@@ -891,17 +1132,29 @@ function retryWrongFromResults(){
 function goHome(){
   STATE.jumpPanelOpen = false;
   STATE.jumpSelectedClass = null;
-  STATE.screen = 'setup';
+  var k = (STATE.screen==='results' && STATE.results) ? STATE.results.kind : STATE.quizKind;
+  if (k==='exam'){
+    if (STATE.screen==='quiz' && examExpired()){ finishQuiz(true); return; }
+    STATE.screen = 'examsetup';
+  } else {
+    STATE.screen = 'setup';
+  }
   render();
 }
 
-function resetAllProgress(){
-  if (!confirm('確定要重置作答紀錄嗎？（錯題本、已練習紀錄與累計正確率將清空，題庫本身不受影響）')) return;
-  STATE.wrongBank = [];
-  STATE.seenBank = [];
-  STATE.cumulative = { answered:0, correct:0 };
+function resetKindProgress(kind){
+  var msgs = {
+    practice:'確定要重置「練習」紀錄嗎？（練習的累計正確率與已練習紀錄將清空，題庫與其他紀錄不受影響）',
+    review:'確定要重置「複習錯題」紀錄嗎？（複習的累計正確率與錯題本將清空，題庫與其他紀錄不受影響）',
+    exam:'確定要重置「測驗」紀錄嗎？（測驗的累計正確率將清空，題庫與其他紀錄不受影響）'
+  };
+  if (!confirm(msgs[kind])) return;
+  if (kind==='practice'){ STATE.cumulative = emptyStats(); STATE.seenBank = []; }
+  else if (kind==='review'){ STATE.reviewStats = emptyStats(); STATE.wrongBank = []; }
+  else { STATE.examStats = emptyStats(); }
+  setQuizSlot(kind, null);
+  clearSessionOf(kind);
   saveProgress();
-  clearSession();
   render();
 }
 
@@ -926,7 +1179,9 @@ function render(){
   html += renderCover();
   html += '<div class="body">';
   if (STATE.screen==='import') html += renderImportScreen();
+  else if (STATE.screen==='home') html += renderHomeScreen();
   else if (STATE.screen==='setup') html += renderSetupScreen();
+  else if (STATE.screen==='examsetup') html += renderExamSetupScreen();
   else if (STATE.screen==='quiz') html += renderQuizScreen();
   else if (STATE.screen==='results') html += renderResultsScreen();
   html += '</div>';
@@ -937,15 +1192,19 @@ function render(){
 function renderCover(){
   var subtitle = '';
   var showHome = false;
+  var showModes = false;
   if (STATE.screen==='import') subtitle = '匯入題庫檔案以開始練習';
-  else if (STATE.screen==='setup') subtitle = ALL.length ? ('題庫共 '+ALL.length+' 題') : '尚未載入題庫';
+  else if (STATE.screen==='home') subtitle = ALL.length ? '請選擇模式' : '尚未載入題庫';
+  else if (STATE.screen==='setup'){ subtitle = ALL.length ? ('練習題目　題庫共 '+ALL.length+' 題') : '尚未載入題庫'; showModes = true; }
+  else if (STATE.screen==='examsetup'){ subtitle = '模擬測驗'; showModes = true; }
   else if (STATE.screen==='quiz'){
-    subtitle = '';
+    subtitle = KIND_LABEL[STATE.quizKind] || '';
     showHome = true;
-  } else if (STATE.screen==='results') subtitle = '測驗結果';
+  } else if (STATE.screen==='results') subtitle = (KIND_LABEL[STATE.results && STATE.results.kind] || '')+'結果';
   return '<div class="cover"><h1>考試題庫練習</h1><div class="sub">'+escapeHtml(subtitle)+'</div>'+
     '<div class="cover-actions">'+
     (showHome ? '<button class="cover-home-btn" data-act="home">返回首頁</button>' : '')+
+    (showModes ? '<button class="cover-home-btn" data-act="go-modes">選擇模式</button>' : '')+
     '<button class="dark-toggle-btn" data-act="toggle-dark" title="切換深色模式">'+(STATE.darkMode?'☀️':'🌙')+'</button>'+
     '</div>'+
     '</div>';
@@ -975,17 +1234,11 @@ function renderSetupScreen(){
     h += '<div class="msg-banner'+(STATE.importIsError?' error':'')+'">'+STATE.importMessage+'</div>';
   }
 
-  // bank management card
-  h += '<div class="card"><div class="bank-summary">';
-  h += '<div class="count">'+ALL.length+'<span>題（'+CLASS_ORDER.length+' 個科目）</span></div>';
-  h += '<div class="btn-row" style="margin-top:0;"><button class="btn secondary" data-act="go-import">匯入題庫檔案</button><button class="btn ghost" data-act="clear-bank">清除全部題庫</button></div>';
-  h += '</div></div>';
-
   // resume paused practice quiz callout
   var hasPausedQuiz = !!(STATE.quiz && STATE.quiz.questions && STATE.quiz.questions.length);
   if (hasPausedQuiz){
     var answeredSoFar = STATE.quiz.questions.filter(function(q){ return STATE.quiz.submitted[q.id]; }).length;
-    h += '<div class="wrongbank-callout"><div class="txt">尚有進行中的測驗（已作答 '+answeredSoFar+'／'+STATE.quiz.questions.length+' 題）</div><button class="btn brass" data-act="resume-quiz">繼續測驗</button></div>';
+    h += '<div class="wrongbank-callout"><div class="txt">尚有進行中的練習（已作答 '+answeredSoFar+'／'+STATE.quiz.questions.length+' 題）</div><button class="btn brass" data-act="resume-quiz">繼續練習</button></div>';
   }
 
   // resume paused wrong-review callout
@@ -999,15 +1252,18 @@ function renderSetupScreen(){
   var wbCount = STATE.wrongBank.filter(function(id){ return id in BY_ID; }).length;
   if (wbCount>0){
     if (!hasPausedReview){
-      h += '<div class="wrongbank-callout"><div class="txt">錯題本中有 '+wbCount+' 題尚待複習</div><button class="btn brass" data-act="review-wrong">開始複習錯題</button></div>';
+      h += '<div class="wrongbank-callout"><div class="txt">錯題本中有 '+wbCount+' 題尚待複習</div><button class="btn brass" data-act="review-wrong">複習錯題</button></div>';
     } else {
       h += '<div class="wrongbank-callout"><div class="txt">錯題本中有 '+wbCount+' 題尚待複習，請先於上方「繼續複習」或完成後再開始新的複習</div></div>';
     }
   }
 
-  // cumulative stats
-  var acc = STATE.cumulative.answered>0 ? Math.round(STATE.cumulative.correct/STATE.cumulative.answered*100) : 0;
-  h += '<div class="stat-line"><span>累計已作答 '+STATE.cumulative.answered+' 題　正確率 '+acc+'%</span><a data-act="reset-progress">重置紀錄</a></div>';
+  // three separate records: 練習 / 複習錯題 / 測驗
+  ['practice','review'].forEach(function(k){
+    var st = statsOf(k);
+    var a = st.answered>0 ? Math.round(st.correct/st.answered*100) : 0;
+    h += '<div class="stat-line"><span>'+KIND_LABEL[k]+'紀錄：累計已作答 '+st.answered+' 題　正確率 '+a+'%</span><a data-act="reset-progress" data-kind="'+k+'">重置</a></div>';
+  });
 
   var total = selectedTotal();
   var canStart = total>0 && (STATE.setup.types.Single || STATE.setup.types.Multi);
@@ -1025,9 +1281,9 @@ function renderSetupScreen(){
     h += '符合篩選條件共 '+total+' 題';
     h += '</div>';
     if (!hasPausedQuiz){
-      h += '<div class="start-btn-wrap"><button class="btn brass start-btn" data-act="start-quiz" '+(canStart?'':'disabled')+'>開始測驗</button></div>';
+      h += '<div class="start-btn-wrap"><button class="btn brass start-btn" data-act="start-quiz" '+(canStart?'':'disabled')+'>開始練習</button></div>';
     } else {
-      h += '<div class="hint" style="margin-top:10px;">尚有進行中的測驗，請先於上方「繼續測驗」或修改設定後再開始新測驗。</div>';
+      h += '<div class="hint" style="margin-top:10px;">尚有進行中的練習，請先於上方「繼續練習」後再開始新的練習。</div>';
     }
     h += '<div class="select-links" style="margin-top:10px;margin-bottom:0;"><a data-act="show-full-setup">修改科目／題型設定</a></div>';
     h += '</div>';
@@ -1062,7 +1318,7 @@ function renderSetupScreen(){
   // question count hint (practice mode always uses all filtered questions)
   h += '<div class="stat-line"><span>符合篩選條件共 '+total+' 題</span></div>';
 
-  h += '<div class="start-btn-wrap"><button class="btn brass start-btn" data-act="start-quiz" '+(canStart?'':'disabled')+'>開始測驗</button></div>';
+  h += '<div class="start-btn-wrap"><button class="btn brass start-btn" data-act="start-quiz" '+(canStart?'':'disabled')+'>開始練習</button></div>';
 
   if (STATE.setupConfigured){
     h += '<div class="select-links" style="margin-top:10px;"><a data-act="hide-full-setup">收合設定</a></div>';
@@ -1107,32 +1363,45 @@ function renderQuizScreen(){
   var submitted = !!quiz.submitted[q.id];
   var sel = quiz.selections[q.id]||[];
   var isFlagged = STATE.wrongBank.indexOf(q.id)>=0;
+  var isExam = STATE.quizKind==='exam';
   var h = '';
+
+  if (isExam){
+    var remain = examRemainingSec();
+    h += '<div class="exam-timer'+(remain<=300?' warn':'')+'" id="examTimer">⏱ 剩餘時間 '+formatTime(remain)+'</div>';
+  }
+
 
   h += '<div class="entry-bar"><div class="entry-left">';
   var subjSn = parseInt(q.sn,10);
   var subjTotal = CLASS_COUNTS[q.class] || total;
-  h += '<span>'+escapeHtml(q.class)+' 第'+subjSn+'／'+subjTotal+'題</span>';
-  h += '<span class="tag">'+(q.type==='Multi'?'複選':'單選')+'</span>';
-  h += '<button class="jump-open-btn" data-act="jump-open">跳題</button>';
+  if (isExam){
+    h += '<span>第 '+(idx+1)+'／'+total+' 題</span>';
+    h += '<span class="tag">'+escapeHtml(q.class)+'</span>';
+    h += '<span class="tag">'+(q.type==='Multi'?'複選':'單選')+'</span>';
+  } else {
+    h += '<span>'+escapeHtml(q.class)+' 第'+subjSn+'／'+subjTotal+'題</span>';
+    h += '<span class="tag">'+(q.type==='Multi'?'複選':'單選')+'</span>';
+    h += '<button class="jump-open-btn" data-act="jump-open">跳題</button>';
+  }
   h += '</div><div class="entry-right">';
   h += '<button class="zoom-btn" data-act="zoom" data-delta="-0.1">A-</button>';
   h += '<span style="font-size:11px;color:var(--ink-soft);">'+Math.round(STATE.textScale*100)+'%</span>';
   h += '<button class="zoom-btn" data-act="zoom" data-delta="0.1">A+</button>';
-  h += '<button class="flag-btn" data-act="toggle-flag" title="加入錯題本">'+(isFlagged?'★':'☆')+'</button>';
+  if (!isExam) h += '<button class="flag-btn" data-act="toggle-flag" title="加入錯題本">'+(isFlagged?'★':'☆')+'</button>';
   h += '</div></div>';
 
   h += '<div class="progress-bar-track"><div class="progress-bar-fill" style="width:'+Math.round(((idx+1)/total)*100)+'%;"></div></div>';
 
-  if (STATE.jumpPanelOpen){
+  if (STATE.jumpPanelOpen && !isExam){
     h += renderJumpPanel(quiz);
   }
 
-  h += '<div class="question-text" style="font-size:'+(18*STATE.textScale)+'px;">'+subjSn+'. '+escapeHtml(q.question)+'</div>';
+  h += '<div class="question-text" style="font-size:'+(18*STATE.textScale)+'px;">'+(isExam ? (idx+1) : subjSn)+'. '+escapeHtml(q.question)+'</div>';
 
   if (q.type==='Multi' && !submitted) h += '<div class="multi-hint">本題為複選題，請選出所有正確選項</div>';
 
-  var revealAnswers = STATE.setup.showAllAnswers;
+  var revealAnswers = STATE.setup.showAllAnswers && !isExam;
   q.options.forEach(function(o,i){
     var cls = 'option-row';
     var mark = String.fromCharCode(65+i);
@@ -1146,6 +1415,7 @@ function renderQuizScreen(){
     }
     var inputType = q.type==='Multi' ? 'checkbox' : 'radio';
     var markChar = mark;
+    if (!submitted && isSel) markChar = '✔';
     if (submitted){
       markChar = o.answer ? '✔' : (isSel ? '✕' : mark);
     } else if (revealAnswers && o.answer){
@@ -1170,17 +1440,22 @@ function renderQuizScreen(){
     }
     h += '</div>';
   }
-  if (q.type==='Multi' && !submitted){
+  if (q.type==='Multi' && !submitted && !isExam){
     h += '<div class="btn-row"><button class="btn brass" data-act="confirm-multi" '+(sel.length===0?'disabled':'')+'>確認送出</button></div>';
   }
 
   h += '<div class="nav-row"><button class="btn secondary" data-act="prev" '+(idx===0?'disabled':'')+'>← 上一題</button><div class="spacer"></div>';
-  if (isLastAnsweredInPractice()){
-    h += '<button class="btn brass" data-act="finish-practice">結束測驗，查看結果</button>';
+  if (isExam){
+    h += '<button class="btn secondary" data-act="next" '+(idx===total-1?'disabled':'')+'>下一題 →</button>';
+  } else if (isLastAnsweredInPractice()){
+    h += '<button class="btn brass" data-act="finish-practice">'+({practice:'結束練習',review:'結束複習',exam:'結束測驗'}[STATE.quizKind])+'，查看結果</button>';
   } else {
     h += '<button class="btn secondary" data-act="next" '+(idx===total-1?'disabled':'')+'>下一題 →</button>';
   }
   h += '</div>';
+  if (isExam){
+    h += '<div class="btn-row" style="justify-content:center;"><button class="btn brass" data-act="finish-exam">結束測驗</button></div>';
+  }
 
   return h;
 }
@@ -1202,6 +1477,9 @@ function renderResultsScreen(){
   h += '<div class="stat-cell"><div class="num">'+Math.round(r.answeredCount/r.total*100)+'%</div><div class="lbl">答題率</div></div>';
   h += '</div>';
 
+  if (r.timeUp){
+    h += '<div class="auto-note">時間到，已自動結束測驗並計分</div>';
+  }
   if (r.newlyWrong>0){
     h += '<div class="auto-note">已自動將 '+r.newlyWrong+' 題答錯的題目加入錯題本</div>';
   }
@@ -1215,7 +1493,7 @@ function renderResultsScreen(){
 
   var reviewable = r.graded.filter(function(g){ return !g.correct; }).length;
   h += '<div class="center-btns">';
-  if (reviewable>0) h += '<button class="btn brass" data-act="retry-wrong">重新測驗錯題</button>';
+  if (reviewable>0 && r.kind!=='exam') h += '<button class="btn brass" data-act="retry-wrong">'+({practice:'重新練習錯題',review:'重新複習錯題',exam:'重新測驗錯題'}[r.kind||'practice'])+'</button>';
   h += '<button class="btn secondary" data-act="home">返回首頁</button>';
   h += '</div>';
 
@@ -1262,8 +1540,18 @@ function bindEvents(){
   if (randomOrderChk) randomOrderChk.addEventListener('change', function(){ STATE.setup.randomOrder = randomOrderChk.checked; });
   var randomOptionsChk = document.getElementById('randomOptionsChk');
   if (randomOptionsChk) randomOptionsChk.addEventListener('change', function(){ STATE.setup.randomOptions = randomOptionsChk.checked; });
+  var examTimeInput = document.getElementById('examTimeInput');
+  if (examTimeInput) examTimeInput.addEventListener('change', function(){ setExamTime(examTimeInput.value); render(); });
   var showAnswersChk = document.getElementById('showAnswersChk');
   if (showAnswersChk) showAnswersChk.addEventListener('change', function(){ STATE.setup.showAllAnswers = showAnswersChk.checked; });
+}
+
+function confirmFinishExam(){
+  if (!STATE.examQuiz) return;
+  if (examExpired()){ finishQuiz(true); return; }
+  var left = STATE.examQuiz.questions.length - examAnsweredCount();
+  var msg = left>0 ? '尚有 '+left+' 題未作答，確定要結束測驗並計分嗎？' : '確定要結束測驗並計分嗎？';
+  if (confirm(msg)) finishQuiz(false);
 }
 
 function handleAction(act, node){
@@ -1271,10 +1559,24 @@ function handleAction(act, node){
   else if (act==='clear-bank'){ clearBank(); }
   else if (act==='review-wrong'){ startWrongReview(); }
   else if (act==='resume-quiz'){ STATE.quizKind = 'practice'; STATE.screen = 'quiz'; render(); }
+  else if (act==='resume-exam'){
+    STATE.quizKind = 'exam';
+    if (examExpired()){ finishQuiz(true); return; }
+    STATE.screen = 'quiz'; render();
+  }
+  else if (act==='open-practice'){ STATE.importMessage = ''; STATE.screen = 'setup'; render(); }
+  else if (act==='open-exam'){
+    if (examExpired()){ STATE.quizKind = 'exam'; finishQuiz(true); return; }
+    STATE.importMessage = '';
+    STATE.screen = 'examsetup'; render();
+  }
+  else if (act==='go-modes'){ STATE.screen = 'home'; render(); }
+  else if (act==='set-exam-time'){ setExamTime(parseInt(node.getAttribute('data-min'),10)); render(); }
+  else if (act==='finish-exam'){ confirmFinishExam(); }
   else if (act==='resume-review'){ STATE.quizKind = 'review'; STATE.screen = 'quiz'; render(); }
   else if (act==='show-full-setup'){ STATE.showFullSetup = true; render(); }
   else if (act==='hide-full-setup'){ STATE.showFullSetup = false; render(); }
-  else if (act==='reset-progress'){ resetAllProgress(); }
+  else if (act==='reset-progress'){ resetKindProgress(node.getAttribute('data-kind')); }
   else if (act==='select-all-classes'){ CLASS_ORDER.forEach(function(c){ STATE.selectedClasses[c]=true; }); render(); }
   else if (act==='select-none-classes'){ CLASS_ORDER.forEach(function(c){ STATE.selectedClasses[c]=false; }); render(); }
   else if (act==='toggle-type'){
@@ -1286,6 +1588,7 @@ function handleAction(act, node){
     render();
   }
   else if (act==='start-quiz'){ startQuiz(); }
+  else if (act==='start-mock'){ startMockQuiz(); }
   else if (act==='pick-option'){ toggleOption(parseInt(node.getAttribute('data-idx'),10)); }
   else if (act==='confirm-multi'){ confirmMultiAnswer(); }
   else if (act==='toggle-flag'){ toggleManualFlag(); }
@@ -1305,7 +1608,10 @@ function handleAction(act, node){
   else if (act==='jump-confirm'){ confirmJumpTo(); }
   else if (act==='finish-practice'){ finishQuiz(); }
   else if (act==='retry-wrong'){ retryWrongFromResults(); }
-  else if (act==='home'){ goHome(); }
+  else if (act==='home'){
+    if (STATE.screen==='quiz' && STATE.quizKind==='exam') confirmFinishExam();
+    else goHome();
+  }
 }
 
 /* ---------- init ---------- */
@@ -1325,7 +1631,11 @@ function init(){
     Store.get(SESSION_KEY, false),
     Store.get(REVIEW_SESSION_KEY, false),
     Store.get(DARKMODE_KEY, false),
-    Store.get(SETUP_DONE_KEY, false)
+    Store.get(SETUP_DONE_KEY, false),
+    Store.get(EXAM_SESSION_KEY, false),
+    Store.get(LASTKIND_KEY, false),
+    Store.get(EXAMTIME_KEY, false),
+    Store.get(BANKSRC_KEY, false)
   ]).then(function(results){
     var bankRaw = results[0];
     var progressRaw = results[1];
@@ -1333,6 +1643,11 @@ function init(){
     var reviewSessionRaw = results[3];
     var darkRaw = results[4];
     var setupDoneRaw = results[5];
+    var examSessionRaw = results[6];
+    var examTimeRaw = results[8];
+    var bankSrcRaw = results[9];
+    try { STATE.bankSources = bankSrcRaw ? JSON.parse(bankSrcRaw) : []; } catch(e){ STATE.bankSources = []; }
+    if (examTimeRaw) STATE.examTimeLimit = Math.max(1, Math.min(300, parseInt(examTimeRaw,10) || 60));
     STATE.darkMode = darkRaw === 'true';
     STATE.setupConfigured = setupDoneRaw === 'true';
     document.body.classList.toggle('dark', STATE.darkMode);
@@ -1344,6 +1659,8 @@ function init(){
       var seed = loadSeedData();
       if (seed.length){
         ALL = seed;
+        STATE.bankSources = ['內建題庫（存匯＋外匯）'];
+        Store.set(BANKSRC_KEY, JSON.stringify(STATE.bankSources), false);
         persistBank();
       }
     }
@@ -1353,36 +1670,36 @@ function init(){
         var p = JSON.parse(progressRaw);
         STATE.wrongBank = (p.wrongBank||[]).filter(function(id){ return id in BY_ID; });
         STATE.seenBank = (p.seenBank||[]).filter(function(id){ return id in BY_ID; });
-        STATE.cumulative = p.cumulative || { answered:0, correct:0 };
+        applyStatsFrom(p);
       } catch(e){}
     }
-    if (reviewSessionRaw){
+    [['practice',sessionRaw],['review',reviewSessionRaw],['exam',examSessionRaw]].forEach(function(pair){
+      if (!pair[1]) return;
       try {
-        var rq = JSON.parse(reviewSessionRaw);
-        if (rq && rq.questions && rq.questions.length){
-          STATE.reviewQuiz = rq;
-        }
+        var sq = JSON.parse(pair[1]);
+        if (sq && sq.questions && sq.questions.length) setQuizSlot(pair[0], sq);
       } catch(e){}
-    }
+    });
     var resumed = false;
-    if (sessionRaw){
-      try {
-        var q = JSON.parse(sessionRaw);
-        if (q && q.questions && q.questions.length){
-          STATE.quiz = q;
-          STATE.quizKind = 'practice';
-          STATE.screen = 'quiz';
-          resumed = true;
-        }
-      } catch(e){}
-    }
     if (!resumed){
-      STATE.screen = ALL.length>0 ? 'setup' : 'import';
+      STATE.screen = ALL.length>0 ? 'home' : 'import';
     }
     render();
   });
 }
 function loadProgressRaw(){ return Store.get(PROGRESS_KEY, false); }
+
+// 測驗 countdown: refresh the clock every second; end the test automatically at 0
+setInterval(function(){
+  if (STATE.screen!=='quiz' || STATE.quizKind!=='exam' || !STATE.examQuiz) return;
+  var remain = examRemainingSec();
+  if (remain<=0){ finishQuiz(true); return; }
+  var el = document.getElementById('examTimer');
+  if (el){
+    el.textContent = '⏱ 剩餘時間 '+formatTime(remain);
+    el.classList.toggle('warn', remain<=300);
+  }
+}, 1000);
 
 init();
 })();
