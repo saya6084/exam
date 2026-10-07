@@ -742,7 +742,7 @@ function startQuiz(){
 
 /* ---------- mock exam: proportional sampling ---------- */
 var MOCK_TOTAL = 70;
-var MOCK_MULTI_RATIO = 0.2;
+var MOCK_MULTI_TOTAL = 5;   // 複選 5 題，其餘為單選（65 題）
 
 function allocateLargestRemainder(weights, total){
   var keys = Object.keys(weights);
@@ -769,18 +769,19 @@ function mockPlan(){
   });
   var N = Math.min(MOCK_TOTAL, ALL.length);
   var quota = allocateLargestRemainder(counts, N);
-  var multiTarget = Math.round(N*MOCK_MULTI_RATIO);
+  var multiTarget = Math.min(MOCK_MULTI_TOTAL, N);
+  var mRatio = N>0 ? multiTarget/N : 0;
   var m = {}, cap = {}, sum = 0;
   CLASS_ORDER.forEach(function(c){
     cap[c] = Math.min(quota[c], multiAvail[c]||0);
-    m[c] = Math.min(Math.floor(quota[c]*MOCK_MULTI_RATIO), cap[c]);
+    m[c] = Math.min(Math.floor(quota[c]*mRatio), cap[c]);
     sum += m[c];
   });
   while (sum<multiTarget){
     var best = null, bestDef = -1;
     CLASS_ORDER.forEach(function(c){
       if (m[c]>=cap[c]) return;
-      var def = quota[c]*MOCK_MULTI_RATIO - m[c];
+      var def = quota[c]*mRatio - m[c];
       if (def>bestDef){ bestDef = def; best = c; }
     });
     if (best===null) break;
@@ -886,7 +887,7 @@ function renderExamSetupScreen(){
 
   h += '<h2 class="section-title">測驗規格</h2><div class="card">';
   h += '<div style="font-size:13px;color:var(--ink-soft);line-height:1.8;">';
-  h += '共 '+mp.total+' 題：單選 '+mp.single+' 題、複選 '+mp.multi+' 題（約 80%／20%）<br>';
+  h += '共 '+mp.total+' 題：單選 '+mp.single+' 題、複選 '+mp.multi+' 題（各科依題數比例分配）<br>';
   h += '各科題數：'+mp.plan.map(function(p){ return escapeHtml(p.cls)+' '+p.n; }).join('　')+'<br>';
   h += '單選題在前、複選題在後；不可跳題；作答過程不顯示對錯，結束後才計算分數。';
   h += '</div></div>';
