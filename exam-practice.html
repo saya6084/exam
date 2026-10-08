@@ -242,6 +242,56 @@ input[type=file]{display:none;}
 .bank-strip .bs-links a.dis{color:var(--ink-soft);opacity:.5;text-decoration:none;cursor:not-allowed;}
 .bank-strip .bs-links a.del{color:var(--stamp-red);}
 .bank-strip .bs-links i{color:var(--line);font-style:normal;}
+.rv-status{font-size:11px;font-weight:700;border-radius:999px;padding:2px 9px;}
+.rv-status.ok{color:var(--stamp-green);background:var(--correct-bg);border:1px solid var(--stamp-green);}
+.rv-status.bad{color:var(--stamp-red);background:var(--wrong-bg);border:1px solid var(--stamp-red);}
+.rv-status.none{color:var(--ink-soft);background:var(--surface-soft);border:1px solid var(--line);}
+.rv-mine{flex:0 0 auto;font-size:11px;color:var(--navy-deep);background:var(--brass-light);border-radius:999px;padding:2px 8px;align-self:center;}
+.rv-legend{display:flex;align-items:center;justify-content:center;gap:2px;font-size:12px;color:var(--ink-soft);margin:18px 0 8px;}
+.rv-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;}
+.rv-dot.ok{background:var(--stamp-green);} .rv-dot.bad{background:var(--stamp-red);} .rv-dot.none{background:var(--line);}
+.rv-palette{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;margin-bottom:16px;}
+.rv-pal{height:34px;border-radius:6px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;}
+.rv-pal.ok{background:var(--correct-bg);border-color:var(--stamp-green);color:var(--stamp-green);}
+.rv-pal.bad{background:var(--wrong-bg);border-color:var(--stamp-red);color:var(--stamp-red);}
+.rv-pal.current{outline:2.5px solid var(--navy);outline-offset:1px;font-weight:700;}
+.exam-stat{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;color:var(--ink-soft);margin:16px 0 8px;}
+.exam-stat a{font-size:11px;color:var(--ink-soft);text-decoration:underline;cursor:pointer;opacity:.8;white-space:nowrap;}
+.exam-stat a:hover{color:var(--stamp-red);opacity:1;}
+.exam-btn-row{display:flex;gap:10px;}
+.exam-btn-row .btn{width:auto;padding:14px 8px;font-size:15.5px;border-radius:10px;font-weight:700;}
+.exam-btn-row .exam-main{flex:3;}
+.exam-btn-row .exam-refresh{flex:1;background:#D23B2E;color:#fff;border:0;box-shadow:0 2px 6px rgba(210,59,46,.35);}
+body.dark .exam-btn-row .exam-refresh{background:#E0584B;}
+.exam-btn-row .exam-refresh:disabled{opacity:.45;box-shadow:none;cursor:not-allowed;}
+.modal-mask{position:fixed;inset:0;background:rgba(20,24,32,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:1000;}
+.modal-box{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:20px 20px 16px;max-width:380px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.3);}
+.modal-msg{font-size:15px;line-height:1.7;white-space:pre-line;margin-bottom:16px;}
+.modal-btns{display:flex;justify-content:flex-end;gap:10px;}
+.modal-btns .btn{padding:9px 18px;font-size:14px;}
+.modal-btns .modal-danger{background:#D23B2E;color:#fff;border:0;}
+.stepper{display:flex;align-items:stretch;}
+.stepper input[type=number]{width:72px;border-radius:8px 0 0 8px;-moz-appearance:textfield;appearance:textfield;}
+.stepper input[type=number]::-webkit-inner-spin-button,.stepper input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.stepper-btns{display:flex;flex-direction:column;}
+.stepper-btns button{flex:1;width:32px;border:1px solid var(--line);border-left:0;background:var(--surface);color:var(--navy);font-size:11px;cursor:pointer;padding:0;line-height:1;}
+.stepper-btns button:first-child{border-radius:0 8px 0 0;border-bottom:0;}
+.stepper-btns button:last-child{border-radius:0 0 8px 0;}
+.stepper-btns button:active{background:var(--brass-light);}
+.rv-spacer{height:64px;}
+.rv-drawer{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:720px;margin:0 auto;}
+.rv-bar{width:100%;display:flex;justify-content:space-between;align-items:center;font-family:inherit;background:linear-gradient(135deg,#24507F,#1B3A63);color:#fff;border:0;padding:14px 18px;font-size:14px;font-weight:600;cursor:pointer;border-radius:12px 12px 0 0;}
+.rv-chev{transition:transform .25s;}
+.rv-drawer.open .rv-chev{transform:rotate(180deg);}
+.rv-sheet{background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:14px 14px 0 0;padding:8px 14px 12px;max-height:55vh;overflow:auto;box-shadow:0 -6px 20px rgba(0,0,0,.14);display:none;}
+.rv-drawer.open .rv-sheet{display:block;}
+.rv-grip{width:40px;height:4px;border-radius:2px;background:var(--line);margin:2px auto 6px;}
+.rv-sheet .rv-legend{margin:6px 0 8px;} .rv-sheet .rv-palette{margin-bottom:4px;}
+.rv-bar{}
+body.dark .cover{background:linear-gradient(135deg,#2F4F78,#1F3856);}
+body.dark .rv-bar{background:linear-gradient(135deg,#2E5A5C,#1F4144);border-top:1px solid #4A7F80;}
+.rv-pal-toggle{display:flex;justify-content:center;margin:16px 0 4px;}
+.rv-pal-toggle span{font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 16px;}
 .mode-grid{display:flex;flex-direction:column;gap:14px;margin-top:6px;}
 .mode-card{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:22px 20px;cursor:pointer;}
 .mode-card:hover{border-color:var(--brass);}
@@ -377,6 +427,7 @@ var REVIEW_SESSION_KEY = 'examprep-review-session-v1';
 var EXAM_SESSION_KEY = 'examprep-exam-session-v1';
 var LASTKIND_KEY = 'examprep-lastkind-v1';
 var EXAMTIME_KEY = 'examprep-examtime-v1';
+var EXAMPAPER_KEY = 'examprep-exampaper-v1';
 var BANKSRC_KEY = 'examprep-banksources-v1';
 var DARKMODE_KEY = 'examprep-darkmode-v1';
 var SETUP_DONE_KEY = 'examprep-setup-done-v1';
@@ -388,7 +439,7 @@ var CLASS_COUNTS = {};
 var BY_ID = {};
 
 var STATE = {
-  screen: 'import', // import | home | setup (練習題目) | examsetup (模擬測驗) | quiz | results
+  screen: 'import', // import | home | setup (練習題目) | examsetup (模擬測驗) | quiz | results | examreview
   selectedClasses: {},
   setup: {
     types: { Single:true, Multi:true },
@@ -400,6 +451,10 @@ var STATE = {
   reviewQuiz: null,
   examQuiz: null,
   bankSources: [], // names of the files the current bank was imported from
+  examPaper: null,       // the fixed 70-question 測驗 paper: { questions:[...], results:null|{...} }
+  examReviewFrom: 'results', // where 返回 leads from the 測驗瀏覽 screen: 'results' | 'home'
+  reviewPaletteOpen: false, // 跳題表 collapsed or not while browsing a 測驗
+  examReviewIndex: 0, // position while browsing all questions after a 測驗
   examTimeLimit: 60, // minutes, chosen before starting a 測驗
   quizKind: 'practice', // which slot the quiz screen is currently showing: 'practice' | 'review' | 'exam'
   wrongBank: [],
@@ -606,7 +661,9 @@ function handleFile(file){
 }
 
 function clearBank(){
-  if (!confirm('確定要清除全部題庫嗎？此動作無法復原（作答紀錄與錯題本會一併清除）。')) return;
+  askConfirm('確定要清除全部題庫嗎？此動作無法復原（作答紀錄與錯題本會一併清除）。', doClearBank, {okText:'清除', danger:true});
+}
+function doClearBank(){
   ALL = [];
   rebuildIndexes();
   STATE.wrongBank = [];
@@ -627,6 +684,8 @@ function clearBank(){
   Store.set(LASTKIND_KEY, '', false);
   STATE.bankSources = [];
   Store.set(BANKSRC_KEY, '', false);
+  STATE.examPaper = null;
+  Store.set(EXAMPAPER_KEY, '', false);
   Store.set(SETUP_DONE_KEY, '', false);
   STATE.screen = 'import';
   STATE.importMessage = '';
@@ -682,6 +741,40 @@ function saveSession(){
 function clearSessionOf(kind){ Store.set(KIND_SESSION_KEY[kind], '', false); }
 function activeQuiz(){
   return getQuizSlot(STATE.quizKind);
+}
+
+/* ---------- in-page confirm dialog ---------- */
+function askConfirm(message, onYes, opts){
+  opts = opts || {};
+  var old = document.getElementById('confirmMask');
+  if (old) old.parentNode.removeChild(old);
+  var mask = document.createElement('div');
+  mask.className = 'modal-mask';
+  mask.id = 'confirmMask';
+  var box = document.createElement('div');
+  box.className = 'modal-box';
+  var msg = document.createElement('div');
+  msg.className = 'modal-msg';
+  msg.textContent = message;
+  var row = document.createElement('div');
+  row.className = 'modal-btns';
+  function close(){ if (mask.parentNode) mask.parentNode.removeChild(mask); }
+  if (!opts.noCancel){
+    var no = document.createElement('button');
+    no.className = 'btn secondary';
+    no.textContent = opts.cancelText || '取消';
+    no.addEventListener('click', close);
+    row.appendChild(no);
+  }
+  var yes = document.createElement('button');
+  yes.className = 'btn '+(opts.danger ? 'modal-danger' : 'brass');
+  yes.textContent = opts.okText || '確定';
+  yes.addEventListener('click', function(){ close(); if (onYes) onYes(); });
+  row.appendChild(yes);
+  box.appendChild(msg); box.appendChild(row); mask.appendChild(box);
+  mask.addEventListener('click', function(e){ if (e.target===mask && !opts.noCancel) close(); });
+  document.body.appendChild(mask);
+  yes.focus();
 }
 
 /* ---------- helpers ---------- */
@@ -799,22 +892,40 @@ function setExamTime(m){
   Store.set(EXAMTIME_KEY, String(m), false);
 }
 
-function startMockQuiz(){
+function buildExamQuestions(){
   var mp = mockPlan();
-  if (!mp) return;
+  if (!mp) return [];
   var singles = [], multis = [];
   mp.plan.forEach(function(p){
     singles = singles.concat(shuffle(ALL.filter(function(q){ return q.class===p.cls && q.type!=='Multi'; })).slice(0, p.single));
     multis = multis.concat(shuffle(ALL.filter(function(q){ return q.class===p.cls && q.type==='Multi'; })).slice(0, p.multi));
   });
   // 單選題在前、複選題在後
-  var chosen = singles.concat(multis).map(function(q){
+  return singles.concat(multis).map(function(q){
     var opts = q.options.map(function(o){ return {option:o.option, answer:o.answer}; });
     return { id:q.id, class:q.class, sn:q.sn, type:q.type, question:q.question, remark:q.remark, explanation:q.explanation, options:opts };
   });
+}
+
+function saveExamPaper(){
+  Store.set(EXAMPAPER_KEY, STATE.examPaper ? JSON.stringify(STATE.examPaper) : '', false);
+}
+function drawExamPaper(){
+  var qs = buildExamQuestions();
+  STATE.examPaper = qs.length ? { questions: qs, results: null } : null;
+  saveExamPaper();
+}
+function ensureExamPaper(){
+  if (!STATE.examPaper && ALL.length) drawExamPaper();
+}
+
+function startMockQuiz(){
+  ensureExamPaper();
+  var paper = STATE.examPaper;
+  if (!paper || paper.results || hasPaused('exam')) return;
   var limitMin = Math.max(1, Math.min(300, parseInt(STATE.examTimeLimit,10) || 60));
   STATE.examQuiz = {
-    questions: chosen, index: 0, selections: {}, submitted: {}, recordedIds: [],
+    questions: JSON.parse(JSON.stringify(paper.questions)), index: 0, selections: {}, submitted: {}, recordedIds: [],
     startedAt: Date.now(), timeLimitSec: limitMin*60
   };
   STATE.quizKind = 'exam';
@@ -823,6 +934,14 @@ function startMockQuiz(){
   STATE.jumpSelectedClass = null;
   saveSession();
   render();
+}
+
+function refreshExamPaper(){
+  if (hasPaused('exam')) return;
+  var taken = !!(STATE.examPaper && STATE.examPaper.results);
+  var msg = taken ? '確定要刷新題目嗎？\n將重新抽取一份新題目，目前這份題目與「瀏覽測驗題目」的內容會被取代。'
+                  : '確定要刷新題目嗎？\n將重新抽取一份新題目，目前這份題目會被取代。';
+  askConfirm(msg, function(){ drawExamPaper(); render(); }, {okText:'刷新題目', danger:true});
 }
 
 function examRemainingSec(){
@@ -871,38 +990,51 @@ function renderHomeScreen(){
 }
 
 function renderExamSetupScreen(){
-  var mp = mockPlan();
-  if (!mp){
+  var paper = STATE.examPaper;
+  if (!ALL.length || !paper){
     return '<div class="empty-state">尚未載入題庫，請先匯入題庫檔案。</div>'+
       '<div class="btn-row" style="justify-content:center;"><button class="btn brass" data-act="go-import">前往匯入題庫</button></div>';
   }
   var h = '';
   var paused = hasPaused('exam');
+  var taken = !!paper.results;
   if (paused){
     h += '<div class="wrongbank-callout"><div class="txt">尚有進行中的測驗（已作答 '+examAnsweredCount()+'／'+STATE.examQuiz.questions.length+' 題，剩餘 '+formatTime(examRemainingSec())+'）</div><button class="btn brass" data-act="resume-exam">繼續測驗</button></div>';
   }
-  var st = STATE.examStats;
-  var a = st.answered>0 ? Math.round(st.correct/st.answered*100) : 0;
-  h += '<div class="stat-line"><span>測驗紀錄：累計已作答 '+st.answered+' 題　正確率 '+a+'%</span><a data-act="reset-progress" data-kind="exam">重置</a></div>';
 
+  // spec of the current (fixed) paper
+  var total = paper.questions.length;
+  var multi = paper.questions.filter(function(q){ return q.type==='Multi'; }).length;
+  var counts = {};
+  paper.questions.forEach(function(q){ counts[q.class] = (counts[q.class]||0)+1; });
+  var order = CLASS_ORDER.filter(function(c){ return counts[c]; });
   h += '<h2 class="section-title">測驗規格</h2><div class="card">';
   h += '<div style="font-size:13px;color:var(--ink-soft);line-height:1.8;">';
-  h += '共 '+mp.total+' 題：單選 '+mp.single+' 題、複選 '+mp.multi+' 題（各科依題數比例分配）<br>';
-  h += '各科題數：'+mp.plan.map(function(p){ return escapeHtml(p.cls)+' '+p.n; }).join('　')+'<br>';
-  h += '單選題在前、複選題在後；不可跳題；作答過程不顯示對錯，結束後才計算分數。';
+  h += '共 '+total+' 題：單選 '+(total-multi)+' 題、複選 '+multi+' 題（各科依題數比例分配）<br>';
+  h += '各科題數：'+order.map(function(c){ return escapeHtml(c)+' '+counts[c]; }).join('　')+'<br>';
+  h += '單選題在前、複選題在後；不可跳題；作答過程不顯示對錯，結束後才計算分數。<br>';
+  h += '<span style="color:var(--navy-deep);font-weight:600;">本份題目固定不變，按「刷新題目」才會重新抽題。</span>';
   h += '</div></div>';
 
   h += '<h2 class="section-title">作答時間</h2><div class="card">';
-  h += '<div class="field-row"><label>限時（分鐘）</label><input type="number" min="1" max="300" id="examTimeInput" value="'+STATE.examTimeLimit+'"></div>';
-  h += '<div class="preset-btns" style="margin-top:10px;">';
-  [30,60,90,120].forEach(function(m){
-    h += '<div class="preset-btn'+(parseInt(STATE.examTimeLimit,10)===m?' active':'')+'" data-act="set-exam-time" data-min="'+m+'">'+m+'</div>';
-  });
-  h += '</div><div class="hint">時間到會自動結束測驗並計分。</div></div>';
+  h += '<div class="field-row"><label>限時（分鐘）</label><div class="stepper"><input type="number" min="1" max="300" step="5" id="examTimeInput" value="'+STATE.examTimeLimit+'">';
+  h += '<div class="stepper-btns"><button type="button" data-act="exam-time-step" data-d="5" aria-label="增加 5 分鐘">▲</button><button type="button" data-act="exam-time-step" data-d="-5" aria-label="減少 5 分鐘">▼</button></div></div></div>';
+  h += '<div class="hint">可直接輸入，或按 ▲▼ 每次增減 5 分鐘；時間到會自動結束測驗並計分。</div></div>';
 
-  if (!paused){
-    h += '<div class="start-btn-wrap"><button class="btn brass start-btn" data-act="start-mock">開始測驗（'+mp.total+' 題）</button></div>';
+  // 測驗紀錄 sits right above the buttons
+  var st = STATE.examStats;
+  var a = st.answered>0 ? Math.round(st.correct/st.answered*100) : 0;
+  h += '<div class="exam-stat"><span>測驗紀錄：累計已作答 '+st.answered+' 題　正確率 '+a+'%</span><a data-act="reset-progress" data-kind="exam" title="清空測驗的累計已作答題數與正確率">清空累計正確率</a></div>';
+
+  h += '<div class="exam-btn-row">';
+  if (taken && !paused){
+    h += '<button class="btn brass exam-main" data-act="open-exam-review-home">瀏覽測驗題目</button>';
   } else {
+    h += '<button class="btn brass exam-main" data-act="start-mock" '+(paused?'disabled':'')+'>開始測驗（'+total+' 題）</button>';
+  }
+  h += '<button class="btn exam-refresh" data-act="refresh-exam" '+(paused?'disabled':'')+'>刷新題目</button>';
+  h += '</div>';
+  if (paused){
     h += '<div class="hint" style="margin-top:10px;">尚有進行中的測驗，請先於上方「繼續測驗」。</div>';
   }
   return h;
@@ -1050,7 +1182,7 @@ function confirmJumpTo(){
     closeJumpPanel();
     goToIndex(targetIdx);
   } else {
-    alert(cls+'第 '+n+' 題不在本次範圍內');
+    askConfirm(cls+'第 '+n+' 題不在本次範圍內', null, {okText:'知道了', noCancel:true});
   }
 }
 function goToIndex(i){
@@ -1108,9 +1240,14 @@ function finishQuiz(timeUp){
   STATE.results = {
     kind: STATE.quizKind,
     timeUp: !!timeUp,
+    selections: JSON.parse(JSON.stringify(quiz.selections || {})),
     graded: graded, correctCount: correctCount, answeredCount: answeredCount, total: total,
     newlyWrong: newlyWrong, byClass: byClass, elapsedSec: elapsedSec
   };
+  if (isExamKind && STATE.examPaper){
+    STATE.examPaper.results = STATE.results;
+    saveExamPaper();
+  }
   STATE.screen = 'results';
   setQuizSlot(STATE.quizKind, null);
   clearSessionOf(STATE.quizKind);
@@ -1142,6 +1279,7 @@ function goHome(){
   var k = (STATE.screen==='results' && STATE.results) ? STATE.results.kind : STATE.quizKind;
   if (k==='exam'){
     if (STATE.screen==='quiz' && examExpired()){ finishQuiz(true); return; }
+    ensureExamPaper();
     STATE.screen = 'examsetup';
   } else {
     STATE.screen = 'setup';
@@ -1155,7 +1293,9 @@ function resetKindProgress(kind){
     review:'確定要重置「複習錯題」紀錄嗎？（複習的累計正確率與錯題本將清空，題庫與其他紀錄不受影響）',
     exam:'確定要重置「測驗」紀錄嗎？（測驗的累計正確率將清空，題庫與其他紀錄不受影響）'
   };
-  if (!confirm(msgs[kind])) return;
+  askConfirm(msgs[kind], function(){ doResetKind(kind); }, {okText:'重置', danger:true});
+}
+function doResetKind(kind){
   if (kind==='practice'){ STATE.cumulative = emptyStats(); STATE.seenBank = []; }
   else if (kind==='review'){ STATE.reviewStats = emptyStats(); STATE.wrongBank = []; }
   else { STATE.examStats = emptyStats(); }
@@ -1191,6 +1331,7 @@ function render(){
   else if (STATE.screen==='examsetup') html += renderExamSetupScreen();
   else if (STATE.screen==='quiz') html += renderQuizScreen();
   else if (STATE.screen==='results') html += renderResultsScreen();
+  else if (STATE.screen==='examreview') html += renderExamReviewScreen();
   html += '</div>';
   appEl.innerHTML = html;
   bindEvents();
@@ -1200,6 +1341,7 @@ function renderCover(){
   var subtitle = '';
   var showHome = false;
   var showModes = false;
+  var showBackResults = false;
   if (STATE.screen==='import') subtitle = '匯入題庫檔案以開始練習';
   else if (STATE.screen==='home') subtitle = ALL.length ? '請選擇模式' : '尚未載入題庫';
   else if (STATE.screen==='setup'){ subtitle = ALL.length ? ('練習題目　題庫共 '+ALL.length+' 題') : '尚未載入題庫'; showModes = true; }
@@ -1207,10 +1349,12 @@ function renderCover(){
   else if (STATE.screen==='quiz'){
     subtitle = KIND_LABEL[STATE.quizKind] || '';
     showHome = true;
+  } else if (STATE.screen==='examreview'){ subtitle = '測驗瀏覽'; showBackResults = true;
   } else if (STATE.screen==='results') subtitle = (KIND_LABEL[STATE.results && STATE.results.kind] || '')+'結果';
   return '<div class="cover"><h1>考試題庫練習</h1><div class="sub">'+escapeHtml(subtitle)+'</div>'+
     '<div class="cover-actions">'+
-    (showHome ? '<button class="cover-home-btn" data-act="home">返回首頁</button>' : '')+
+    (showHome ? '<button class="cover-home-btn" data-act="home">'+(STATE.screen==='quiz' && STATE.quizKind==='exam' ? '返回測驗首頁' : '返回首頁')+'</button>' : '')+
+    (showBackResults ? '<button class="cover-home-btn" data-act="exam-review-back">瀏覽成績</button><button class="cover-home-btn" data-act="exam-review-home">返回測驗首頁</button>' : '')+
     (showModes ? '<button class="cover-home-btn" data-act="go-modes">選擇模式</button>' : '')+
     '<button class="dark-toggle-btn" data-act="toggle-dark" title="切換深色模式">'+(STATE.darkMode?'☀️':'🌙')+'</button>'+
     '</div>'+
@@ -1467,6 +1611,70 @@ function renderQuizScreen(){
   return h;
 }
 
+function renderExamReviewScreen(){
+  var r = STATE.results;
+  if (!r || r.kind!=='exam' || !r.graded || !r.graded.length) return '<div class="empty-state">沒有可瀏覽的測驗</div>';
+  var items = r.graded, total = items.length;
+  var idx = Math.max(0, Math.min(total-1, STATE.examReviewIndex||0));
+  var g = items[idx], q = g.q;
+  var sel = (r.selections && r.selections[q.id]) || [];
+  var st = !g.answered ? 'none' : (g.correct ? 'ok' : 'bad');
+  var stLabel = {none:'未作答', ok:'答對', bad:'答錯'}[st];
+  var h = '';
+
+  h += '<div class="entry-bar"><div class="entry-left">';
+  h += '<span>第 '+(idx+1)+'／'+total+' 題</span>';
+  h += '<span class="tag">'+escapeHtml(q.class)+'</span>';
+  h += '<span class="tag">'+(q.type==='Multi'?'複選':'單選')+'</span>';
+  h += '<span class="rv-status '+st+'">'+stLabel+'</span>';
+  h += '</div><div class="entry-right">';
+  h += '<button class="zoom-btn" data-act="zoom" data-delta="-0.1">A-</button>';
+  h += '<span style="font-size:11px;color:var(--ink-soft);">'+Math.round(STATE.textScale*100)+'%</span>';
+  h += '<button class="zoom-btn" data-act="zoom" data-delta="0.1">A+</button>';
+  h += '</div></div>';
+  h += '<div class="progress-bar-track"><div class="progress-bar-fill" style="width:'+Math.round(((idx+1)/total)*100)+'%;"></div></div>';
+
+  h += '<div class="question-text" style="font-size:'+(18*STATE.textScale)+'px;">'+(idx+1)+'. '+escapeHtml(q.question)+'</div>';
+  q.options.forEach(function(o,i){
+    var cls = 'option-row';
+    var isSel = sel.indexOf(i)>=0;
+    var mark = String.fromCharCode(65+i);
+    if (o.answer){ cls += ' correct'; mark = '✔'; }
+    else if (isSel){ cls += ' wrong'; mark = '✕'; }
+    h += '<div class="'+cls+'" style="cursor:default;">';
+    h += '<span class="mark">'+mark+'</span>';
+    h += '<span style="font-size:'+(16*STATE.textScale)+'px;white-space:pre-line;flex:1;">'+escapeHtml(o.option)+'</span>';
+    if (isSel) h += '<span class="rv-mine">你的答案</span>';
+    h += '</div>';
+  });
+  if (q.remark) h += '<div class="remark-box">'+escapeHtml(q.remark)+'</div>';
+  if (q.explanation){
+    var expOpen = !!STATE.explanationOpen[q.id];
+    h += '<div class="explanation-wrap">';
+    h += '<div class="explanation-toggle" data-act="toggle-review-explanation"><span>'+(expOpen?'▾':'▸')+' 答案解釋</span></div>';
+    if (expOpen) h += '<div class="remark-box explanation-box" style="font-size:'+(16*STATE.textScale)+'px;">'+escapeHtml(q.explanation)+'</div>';
+    h += '</div>';
+  }
+
+  h += '<div class="nav-row"><button class="btn secondary" data-act="review-prev" '+(idx===0?'disabled':'')+'>← 上一題</button><div class="spacer"></div>';
+  h += '<button class="btn secondary" data-act="review-next" '+(idx===total-1?'disabled':'')+'>下一題 →</button></div>';
+
+  var palOpen = STATE.reviewPaletteOpen;
+  h += '<div class="rv-spacer"></div>';
+  h += '<div class="rv-drawer'+(palOpen?' open':'')+'">';
+  h += '<div class="rv-sheet"><div class="rv-grip"></div>';
+  h += '<div class="rv-legend"><span class="rv-dot ok"></span>答對　<span class="rv-dot bad"></span>答錯　<span class="rv-dot none"></span>未作答</div>';
+  h += '<div class="rv-palette">';
+  items.forEach(function(it,i){
+    var s2 = !it.answered ? 'none' : (it.correct ? 'ok' : 'bad');
+    h += '<button class="rv-pal '+s2+(i===idx?' current':'')+'" data-act="review-goto" data-i="'+i+'">'+(i+1)+'</button>';
+  });
+  h += '</div></div>';
+  h += '<button class="rv-bar" data-act="toggle-review-palette"><span>☰ 跳題　第 '+(idx+1)+'／'+total+' 題</span><span class="rv-chev">▴</span></button>';
+  h += '</div>';
+  return h;
+}
+
 function renderResultsScreen(){
   var r = STATE.results;
   if (!r) return '<div class="empty-state">沒有可顯示的結果</div>';
@@ -1501,7 +1709,8 @@ function renderResultsScreen(){
   var reviewable = r.graded.filter(function(g){ return !g.correct; }).length;
   h += '<div class="center-btns">';
   if (reviewable>0 && r.kind!=='exam') h += '<button class="btn brass" data-act="retry-wrong">'+({practice:'重新練習錯題',review:'重新複習錯題',exam:'重新測驗錯題'}[r.kind||'practice'])+'</button>';
-  h += '<button class="btn secondary" data-act="home">返回首頁</button>';
+  if (r.kind==='exam') h += '<button class="btn brass" data-act="open-exam-review">瀏覽測驗題目</button>';
+  h += '<button class="btn secondary" data-act="home">'+(r.kind==='exam' ? '返回測驗首頁' : '返回首頁')+'</button>';
   h += '</div>';
 
   return h;
@@ -1558,7 +1767,7 @@ function confirmFinishExam(){
   if (examExpired()){ finishQuiz(true); return; }
   var left = STATE.examQuiz.questions.length - examAnsweredCount();
   var msg = left>0 ? '尚有 '+left+' 題未作答，確定要結束測驗並計分嗎？' : '確定要結束測驗並計分嗎？';
-  if (confirm(msg)) finishQuiz(false);
+  askConfirm(msg, function(){ if (STATE.examQuiz) finishQuiz(false); }, {okText:'結束測驗'});
 }
 
 function handleAction(act, node){
@@ -1575,8 +1784,27 @@ function handleAction(act, node){
   else if (act==='open-exam'){
     if (examExpired()){ STATE.quizKind = 'exam'; finishQuiz(true); return; }
     STATE.importMessage = '';
+    ensureExamPaper();
     STATE.screen = 'examsetup'; render();
   }
+  else if (act==='open-exam-review'){ STATE.examReviewFrom = 'results'; STATE.examReviewIndex = 0; STATE.screen = 'examreview'; render(); window.scrollTo(0,0); }
+  else if (act==='open-exam-review-home'){
+    if (!STATE.examPaper || !STATE.examPaper.results) return;
+    STATE.results = STATE.examPaper.results;
+    STATE.examReviewFrom = 'home'; STATE.examReviewIndex = 0; STATE.screen = 'examreview'; render(); window.scrollTo(0,0);
+  }
+  else if (act==='exam-review-back'){ STATE.screen = 'results'; render(); window.scrollTo(0,0); }
+  else if (act==='exam-review-home'){ ensureExamPaper(); STATE.screen = 'examsetup'; render(); window.scrollTo(0,0); }
+  else if (act==='toggle-review-palette'){ STATE.reviewPaletteOpen = !STATE.reviewPaletteOpen; render(); }
+  else if (act==='refresh-exam'){ refreshExamPaper(); }
+  else if (act==='review-prev'){ STATE.examReviewIndex = Math.max(0, STATE.examReviewIndex-1); render(); window.scrollTo(0,0); }
+  else if (act==='review-next'){ STATE.examReviewIndex = Math.min((STATE.results ? STATE.results.graded.length : 1)-1, STATE.examReviewIndex+1); render(); window.scrollTo(0,0); }
+  else if (act==='review-goto'){ STATE.examReviewIndex = parseInt(node.getAttribute('data-i'),10)||0; render(); window.scrollTo(0,0); }
+  else if (act==='toggle-review-explanation'){
+    var rq = STATE.results && STATE.results.graded[STATE.examReviewIndex];
+    if (rq){ STATE.explanationOpen[rq.q.id] = !STATE.explanationOpen[rq.q.id]; render(); }
+  }
+  else if (act==='exam-time-step'){ setExamTime((parseInt(STATE.examTimeLimit,10)||60) + parseInt(node.getAttribute('data-d'),10)); render(); }
   else if (act==='go-modes'){ STATE.screen = 'home'; render(); }
   else if (act==='set-exam-time'){ setExamTime(parseInt(node.getAttribute('data-min'),10)); render(); }
   else if (act==='finish-exam'){ confirmFinishExam(); }
@@ -1633,7 +1861,8 @@ function init(){
     Store.get(EXAM_SESSION_KEY, false),
     Store.get(LASTKIND_KEY, false),
     Store.get(EXAMTIME_KEY, false),
-    Store.get(BANKSRC_KEY, false)
+    Store.get(BANKSRC_KEY, false),
+    Store.get(EXAMPAPER_KEY, false)
   ]).then(function(results){
     var bankRaw = results[0];
     var progressRaw = results[1];
@@ -1644,6 +1873,8 @@ function init(){
     var examSessionRaw = results[6];
     var examTimeRaw = results[8];
     var bankSrcRaw = results[9];
+    var examPaperRaw = results[10];
+    try { var ep = examPaperRaw ? JSON.parse(examPaperRaw) : null; STATE.examPaper = (ep && ep.questions && ep.questions.length) ? ep : null; } catch(e){ STATE.examPaper = null; }
     try { STATE.bankSources = bankSrcRaw ? JSON.parse(bankSrcRaw) : []; } catch(e){ STATE.bankSources = []; }
     if (examTimeRaw) STATE.examTimeLimit = Math.max(1, Math.min(300, parseInt(examTimeRaw,10) || 60));
     STATE.darkMode = darkRaw === 'true';
