@@ -290,6 +290,7 @@ body.dark .exam-btn-row .exam-refresh{background:#E0584B;}
 .rv-bar{}
 body.dark .cover{background:linear-gradient(135deg,#2F4F78,#1F3856);}
 body.dark .rv-bar{background:linear-gradient(135deg,#2E5A5C,#1F4144);border-top:1px solid #4A7F80;}
+@media (max-width:720px){.rv-bar,.rv-sheet{border-radius:0;}}
 .rv-pal-toggle{display:flex;justify-content:center;margin:16px 0 4px;}
 .rv-pal-toggle span{font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 16px;}
 .mode-grid{display:flex;flex-direction:column;gap:14px;margin-top:6px;}
@@ -1353,8 +1354,8 @@ function renderCover(){
   } else if (STATE.screen==='results') subtitle = (KIND_LABEL[STATE.results && STATE.results.kind] || '')+'結果';
   return '<div class="cover"><h1>考試題庫練習</h1><div class="sub">'+escapeHtml(subtitle)+'</div>'+
     '<div class="cover-actions">'+
-    (showHome ? '<button class="cover-home-btn" data-act="home">'+(STATE.screen==='quiz' && STATE.quizKind==='exam' ? '返回測驗首頁' : '返回首頁')+'</button>' : '')+
-    (showBackResults ? '<button class="cover-home-btn" data-act="exam-review-back">瀏覽成績</button><button class="cover-home-btn" data-act="exam-review-home">返回測驗首頁</button>' : '')+
+    (showHome ? '<button class="cover-home-btn" data-act="home">'+(STATE.screen==='quiz' && STATE.quizKind==='exam' ? '返回首頁' : '返回首頁')+'</button>' : '')+
+    (showBackResults ? '<button class="cover-home-btn" data-act="exam-review-back">瀏覽成績</button><button class="cover-home-btn" data-act="exam-review-home">返回首頁</button>' : '')+
     (showModes ? '<button class="cover-home-btn" data-act="go-modes">選擇模式</button>' : '')+
     '<button class="dark-toggle-btn" data-act="toggle-dark" title="切換深色模式">'+(STATE.darkMode?'☀️':'🌙')+'</button>'+
     '</div>'+
@@ -1710,7 +1711,7 @@ function renderResultsScreen(){
   h += '<div class="center-btns">';
   if (reviewable>0 && r.kind!=='exam') h += '<button class="btn brass" data-act="retry-wrong">'+({practice:'重新練習錯題',review:'重新複習錯題',exam:'重新測驗錯題'}[r.kind||'practice'])+'</button>';
   if (r.kind==='exam') h += '<button class="btn brass" data-act="open-exam-review">瀏覽測驗題目</button>';
-  h += '<button class="btn secondary" data-act="home">'+(r.kind==='exam' ? '返回測驗首頁' : '返回首頁')+'</button>';
+  h += '<button class="btn secondary" data-act="home">'+(r.kind==='exam' ? '返回首頁' : '返回首頁')+'</button>';
   h += '</div>';
 
   return h;
