@@ -1609,6 +1609,11 @@ function renderJumpPanel(quiz){
   return h;
 }
 
+// 勾選「顯示全部答案」時，答案解釋預設展開（可手動收合）；否則預設收合
+function explanationVisible(id, reveal){
+  var v = STATE.explanationOpen[id];
+  return reveal ? (v!==false) : !!v;
+}
 function renderQuizScreen(){
   var quiz = activeQuiz();
   var q = currentQuestion();
@@ -1688,8 +1693,8 @@ function renderQuizScreen(){
   }
   if (submitted && !isExam) h += levelInfoLine(q);
 
-  if (submitted && q.explanation){
-    var expOpen = !!STATE.explanationOpen[q.id];
+  if ((submitted || revealAnswers) && q.explanation){
+    var expOpen = explanationVisible(q.id, revealAnswers);
     h += '<div class="explanation-wrap">';
     h += '<div class="explanation-toggle" data-act="toggle-explanation"><span>'+(expOpen?'▾':'▸')+' 答案解釋</span></div>';
     if (expOpen){
@@ -1945,7 +1950,10 @@ function handleAction(act, node){
   else if (act==='toggle-flag'){ toggleManualFlag(); }
   else if (act==='toggle-explanation'){
     var qq = currentQuestion();
-    if (qq){ STATE.explanationOpen[qq.id] = !STATE.explanationOpen[qq.id]; render(); }
+    if (qq){
+      var rv = STATE.setup.showAllAnswers && STATE.quizKind!=='exam';
+      STATE.explanationOpen[qq.id] = !explanationVisible(qq.id, rv); render();
+    }
   }
   else if (act==='zoom'){ adjustTextScale(parseFloat(node.getAttribute('data-delta'))); }
   else if (act==='toggle-dark'){ toggleDarkMode(); }
