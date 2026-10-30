@@ -1185,6 +1185,7 @@ function toggleOption(idx){
   if (!q) return;
   var quiz = activeQuiz();
   if (quiz.submitted[q.id]) return;
+  if (STATE.quizKind!=='exam' && STATE.setup.showAllAnswers) return; // 顯示全部答案模式：選項不可點擊
   if (STATE.quizKind==='exam'){
     if (examExpired()){ finishQuiz(true); return; }
     var cur = quiz.selections[q.id] ? quiz.selections[q.id].slice() : [];
