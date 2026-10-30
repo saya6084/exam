@@ -1609,10 +1609,9 @@ function renderJumpPanel(quiz){
   return h;
 }
 
-// 勾選「顯示全部答案」時，答案解釋預設展開（可手動收合）；否則預設收合
+// 答案解釋一律預設收合，按一下才展開
 function explanationVisible(id, reveal){
-  var v = STATE.explanationOpen[id];
-  return reveal ? (v!==false) : !!v;
+  return !!STATE.explanationOpen[id];
 }
 function renderQuizScreen(){
   var quiz = activeQuiz();
